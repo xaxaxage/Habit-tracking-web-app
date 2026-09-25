@@ -2,6 +2,7 @@ import type { ComponentChildren } from 'preact';
 import { createPortal } from 'preact/compat';
 import { useEffect, useRef } from 'preact/hooks';
 import { dismissToast, useToast } from '../lib/toast';
+import { motionOn } from '../lib/motion';
 import { Calendar, Gear, Grid, Plus } from './Icons';
 
 export type Tab = 'today' | 'week' | 'settings';
@@ -76,8 +77,10 @@ export function Sheet({
   children: ComponentChildren;
 }) {
   const ref = useRef<HTMLElement>(null);
+  const scrim = useRef<HTMLDivElement>(null);
   const close = useRef(onClose);
   close.current = onClose;
+  useSwipeDown(ref, scrim, () => close.current());
 
   useEffect(() => {
     const opener = document.activeElement as HTMLElement | null;
@@ -118,14 +121,114 @@ export function Sheet({
 
   return createPortal(
     <>
-      <div class="scrim" onClick={() => close.current()} />
+      <div ref={scrim} class="scrim" onClick={() => close.current()} />
       <section ref={ref} role="dialog" aria-modal="true" aria-labelledby={labelledBy} class={`sheet ${cls}`}>
-        <span class="grabber" aria-hidden="true" />
+        <span class="grabber-zone" aria-hidden="true">
+          <span class="grabber" />
+        </span>
         {children}
       </section>
     </>,
     document.body,
   );
+}
+
+/**
+ * Swipe a sheet down to close it, like on iPhone: it follows the finger from
+ * the top, closes past a quarter of its height (or on a quick flick) and
+ * springs back otherwise. Swiping starts only when the sheet is scrolled to
+ * the top (so its content still scrolls) and not from inside a text field
+ * (so text can still be selected); the grabber at the top always works, with
+ * a mouse too.
+ */
+function useSwipeDown(box: { current: HTMLElement | null }, scrim: { current: HTMLElement | null }, onClose: () => void) {
+  useEffect(() => {
+    const sheet = box.current!;
+    let drag: { x0: number; y0: number; lastY: number; lastT: number; v: number; dy: number; state: 'maybe' | 'dragging' | 'no' } | null = null;
+
+    const move = (dy: number) => {
+      sheet.style.transition = 'none';
+      sheet.style.transform = `translateY(${dy}px)`;
+      if (scrim.current) scrim.current.style.opacity = String(Math.max(0, 1 - dy / sheet.offsetHeight));
+    };
+    const settle = (closing: boolean) => {
+      const animate = motionOn();
+      sheet.style.transition = animate ? `transform ${closing ? 0.2 : 0.28}s cubic-bezier(0.2, 0.8, 0.2, 1)` : 'none';
+      if (scrim.current) scrim.current.style.transition = animate ? 'opacity 0.2s ease' : 'none';
+      if (closing) {
+        sheet.style.transform = 'translateY(100%)';
+        if (scrim.current) scrim.current.style.opacity = '0';
+        if (animate) setTimeout(onClose, 180);
+        else onClose();
+      } else {
+        sheet.style.transform = '';
+        if (scrim.current) scrim.current.style.opacity = '';
+      }
+    };
+    const begin = (x: number, y: number, t: number, target: EventTarget | null) => {
+      const el = target as Element | null;
+      const fromGrabber = !!el?.closest('.grabber-zone');
+      if (!fromGrabber && (el?.closest('input, textarea, select') || sheet.scrollTop > 0)) drag = null;
+      else drag = { x0: x, y0: y, lastY: y, lastT: t, v: 0, dy: 0, state: 'maybe' };
+    };
+    /** Returns true while the sheet is being dragged (the gesture is ours). */
+    const follow = (x: number, y: number, t: number): boolean => {
+      if (!drag || drag.state === 'no') return false;
+      const dy = y - drag.y0;
+      if (drag.state === 'maybe') {
+        if (Math.abs(dy) < 6 && Math.abs(x - drag.x0) < 6) return false;
+        if (dy <= 0 || Math.abs(dy) < Math.abs(x - drag.x0) || sheet.scrollTop > 0) {
+          drag.state = 'no';
+          return false;
+        }
+        drag.state = 'dragging';
+      }
+      drag.v = (y - drag.lastY) / Math.max(1, t - drag.lastT);
+      drag.lastY = y;
+      drag.lastT = t;
+      drag.dy = Math.max(0, dy);
+      move(drag.dy);
+      return true;
+    };
+    const end = () => {
+      if (drag?.state === 'dragging') settle(drag.dy > Math.min(140, sheet.offsetHeight / 4) || drag.v > 0.6);
+      drag = null;
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return void (drag = null);
+      begin(e.touches[0].clientX, e.touches[0].clientY, e.timeStamp, e.target);
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (follow(e.touches[0].clientX, e.touches[0].clientY, e.timeStamp)) e.preventDefault();
+    };
+    // A mouse can drag the grabber.
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0 || !(e.target as Element).closest('.grabber-zone')) return;
+      begin(e.clientX, e.clientY, e.timeStamp, e.target);
+      const onMove = (m: PointerEvent) => follow(m.clientX, m.clientY, m.timeStamp);
+      const onUp = () => {
+        end();
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+      };
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+    };
+    sheet.addEventListener('touchstart', onTouchStart, { passive: true });
+    sheet.addEventListener('touchmove', onTouchMove, { passive: false });
+    sheet.addEventListener('touchend', end);
+    sheet.addEventListener('touchcancel', end);
+    sheet.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      sheet.removeEventListener('touchstart', onTouchStart);
+      sheet.removeEventListener('touchmove', onTouchMove);
+      sheet.removeEventListener('touchend', end);
+      sheet.removeEventListener('touchcancel', end);
+      sheet.removeEventListener('pointerdown', onPointerDown);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }
 
 /**

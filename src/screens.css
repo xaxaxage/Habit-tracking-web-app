@@ -385,13 +385,22 @@
   flex-direction: column;
   gap: 18px;
 }
+/* The handle at the top of a sheet, with room around it to grab. */
+.grabber-zone {
+  align-self: stretch;
+  display: flex;
+  justify-content: center;
+  margin: -12px 0 -10px;
+  padding: 12px 0 10px;
+  cursor: grab;
+  touch-action: none;
+  flex-shrink: 0;
+}
 .grabber {
-  align-self: center;
   width: 40px;
   height: 5px;
   border-radius: 3px;
   background: var(--line-strong);
-  flex-shrink: 0;
 }
 .sheet-head {
   display: flex;

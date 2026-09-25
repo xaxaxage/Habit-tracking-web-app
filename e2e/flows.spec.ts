@@ -234,3 +234,71 @@ test('empty board: an example opens New habit ready to add', async ({ page }) =>
   await page.getByRole('button', { name: 'Add to my board' }).click();
   await expect(tile(page, 'Workout')).toContainText('0 of 3 this week');
 });
+
+test('swipe the sheet down to close it; a short swipe springs back; scrolling and text fields still work', async ({ page, context }) => {
+  await openWith(page, sampleData(), '#/');
+  const cdp = await context.newCDPSession(page);
+  /** A finger moving from one point to another over `steps` moves, `ms` apart. */
+  const swipe = async (x: number, y0: number, y1: number, steps = 10, ms = 16) => {
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: y0 }] });
+    for (let i = 1; i <= steps; i++) {
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y0 + ((y1 - y0) * i) / steps }] });
+      await page.waitForTimeout(ms);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  };
+  const water = tile(page, 'Water');
+  await water.click({ button: 'right' });
+  const sheet = page.getByRole('dialog', { name: 'Water' });
+  await expect(sheet).toBeVisible();
+  await page.waitForTimeout(400); // the sheet has slid up
+  const box = (await sheet.boundingBox())!;
+
+  // A short, slow pull springs back.
+  await swipe(box.x + box.width / 2, box.y + 30, box.y + 70, 10, 40);
+  await page.waitForTimeout(400);
+  await expect(sheet).toBeVisible();
+  expect((await sheet.boundingBox())!.y).toBeCloseTo(box.y, 0);
+
+  // Pulling inside the note field doesn't move the sheet.
+  const note = (await sheet.getByLabel('Note for today').boundingBox())!;
+  await swipe(note.x + 40, note.y + 10, note.y + 300);
+  await page.waitForTimeout(400);
+  await expect(sheet).toBeVisible();
+
+  // A proper swipe from the top closes it, and focus goes back to the tile.
+  await swipe(box.x + box.width / 2, box.y + 30, box.y + 330);
+  await expect(sheet).toBeHidden();
+  await expect(water).toBeFocused();
+
+  // On a short screen the sheet scrolls: a pull while it's scrolled down scrolls it back instead of closing.
+  await page.setViewportSize({ width: 375, height: 520 });
+  await water.click({ button: 'right' });
+  await page.waitForTimeout(400);
+  await sheet.evaluate((el) => (el.scrollTop = 200));
+  const small = (await sheet.boundingBox())!;
+  await swipe(small.x + small.width / 2, small.y + 150, small.y + 330);
+  await page.waitForTimeout(400);
+  await expect(sheet).toBeVisible();
+  expect(await sheet.evaluate((el) => el.scrollTop)).toBeLessThan(200);
+  // Back at the top, the same swipe closes it.
+  await sheet.evaluate((el) => (el.scrollTop = 0));
+  await swipe(small.x + small.width / 2, small.y + 20, small.y + 300);
+  await expect(sheet).toBeHidden();
+});
+
+test('with a mouse, drag the grabber down to close the sheet', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 800 }, timezoneId: 'Europe/Berlin', serviceWorkers: 'block' });
+  const page = await context.newPage();
+  await openWith(page, sampleData(), '#/');
+  await tile(page, 'Read').click({ button: 'right' });
+  const sheet = page.getByRole('dialog', { name: 'Read' });
+  await page.waitForTimeout(400);
+  const grab = (await sheet.locator('.grabber-zone').boundingBox())!;
+  await page.mouse.move(grab.x + grab.width / 2, grab.y + grab.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(grab.x + grab.width / 2, grab.y + 300, { steps: 12 });
+  await page.mouse.up();
+  await expect(sheet).toBeHidden();
+  await context.close();
+});
