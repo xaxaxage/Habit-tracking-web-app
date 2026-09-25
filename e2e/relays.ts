@@ -52,10 +52,6 @@ export class MockRelay {
 
   private handle(ws: WebSocketRoute, raw: string) {
     const msg = JSON.parse(raw);
-    if (process.env.DEBUG_SYNC) {
-      const who = (this.sockets.get(ws) as unknown as { _tag?: string })?._tag ?? '?';
-      console.log(`relay<-${who}`, msg[0], msg[1]?.id?.slice?.(0, 6) ?? msg[1], msg[0] === 'EVENT' ? msg[1].created_at : JSON.stringify(msg.slice(2)).slice(0, 120), 'subs', this.subs.size);
-    }
     if (msg[0] === 'EVENT') {
       const e: Event = msg[1];
       if (!verifyEvent(e)) return ws.send(JSON.stringify(['OK', e.id, false, 'invalid: bad signature']));

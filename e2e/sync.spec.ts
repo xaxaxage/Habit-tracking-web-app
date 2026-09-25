@@ -21,11 +21,9 @@ async function device(browser: Browser, relays: [MockRelay, MockRelay], withData
     timezoneId: 'Europe/Berlin',
     serviceWorkers: 'block',
   });
-  (context as unknown as { _tag: string })._tag = withData ? 'A' : 'B';
   await routeRelays(context, relays);
   const page = await context.newPage();
   page.on('dialog', (d) => d.accept());
-  page.on('console', (m) => process.env.DEBUG_SYNC && console.log(withData ? 'A:' : 'B:', m.type(), m.text().slice(0, 300)));
   await openWith(page, withData ? sampleData() : null, '#/settings', { ownRelays: true });
   return { context, page };
 }
