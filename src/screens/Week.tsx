@@ -5,6 +5,7 @@ import { cycleDay, useData } from '../lib/store';
 import { addDays, daysBetween, rangeLabelLong, weekday, weekdayIndex, weekStartOf } from '../lib/dates';
 import { href, navigate } from '../lib/router';
 import { Check, ChevronLeft, ChevronRight, Minus } from '../components/Icons';
+import { useCountUp } from '../lib/motion';
 
 const STATE_WORDS: Record<DayState, string> = {
   done: 'done',
@@ -43,6 +44,7 @@ export function Week({ start, today }: { start?: string; today: string }) {
   const canGoBack = first > weekStartOf(earliest, ws);
   const go = (d: string) => navigate(d === current ? '/week' : href('/week', { start: d }), { replace: true });
   const letters = week.days.map((d) => WEEKDAY_LETTER[weekdayIndex(d)]);
+  const shownScore = useCountUp(`week-${first}`, week.score ?? 0, 500);
 
   return (
     <main class="screen with-nav" aria-labelledby="week-title">
@@ -76,7 +78,7 @@ export function Week({ start, today }: { start?: string; today: string }) {
       ) : (
         <>
           <section aria-label="Weekly score" class="score-card">
-            <span class="pct">{week.score === null ? '–' : `${week.score}%`}</span>
+            <span class="pct">{week.score === null ? '–' : `${Math.round(shownScore)}%`}</span>
             <div>
               <strong>
                 {week.done} of {week.due} check-ins

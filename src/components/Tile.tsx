@@ -50,7 +50,7 @@ export function TileView({
   const press = useLongPress(onOptions);
   const full = tile.status === 'done';
   const fill = full ? 1 : tile.status === 'skipped' ? 0 : tile.progress;
-  const cls = ['tile', `c-${tile.habit.color}`, full && 'full', tile.status === 'skipped' && 'skipped', quiet && 'quiet']
+  const cls = ['tile', `c-${tile.habit.color}`, full && 'full', fill >= 0.7 && 'high', tile.status === 'skipped' && 'skipped', quiet && 'quiet']
     .filter(Boolean)
     .join(' ');
   return (

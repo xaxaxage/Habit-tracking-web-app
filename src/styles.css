@@ -50,6 +50,9 @@
   --disabled: #52666b;
   --on-ink: #0e1a1d;
   --accent: #fb8b24;
+  /* The accent as text, and the focus ring: deeper in light palettes so they stay readable. */
+  --accent-text: #fb8b24;
+  --focus: #fb8b24;
   --on-accent: #1a0b02;
   --flame: #f0a56a;
   --danger: #f0616f;
@@ -157,7 +160,7 @@ p {
   margin: 0;
 }
 :focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--focus);
   outline-offset: 2px;
 }
 textarea::placeholder,
@@ -444,7 +447,7 @@ input::placeholder {
 }
 .input:focus,
 .textarea:focus {
-  border-color: var(--accent);
+  border-color: var(--focus);
 }
 
 /* ── Toast and banners ────────────────────────────────────────────────── */

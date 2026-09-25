@@ -17,6 +17,7 @@ import { showToast } from '../lib/toast';
 import { ChevronDown, ChevronUp } from '../components/Icons';
 import { loadSyncConfig } from '../lib/sync/state';
 import { SyncSettings } from './SyncSettings';
+import { AppearanceSettings } from './AppearanceSettings';
 
 export function Card({ title, id, children }: { title: string; id: string; children: ComponentChildren }) {
   return (
@@ -199,6 +200,8 @@ export function Settings() {
       </header>
 
       <SyncSettings />
+
+      <AppearanceSettings />
 
       <HabitSettings />
 
