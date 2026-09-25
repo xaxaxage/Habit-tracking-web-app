@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Widgets and reminders</title>
+<script src="9dc9088e-b062-4bf9-9a91-062608da7b2e"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style></style>
+<style>
+body{margin:0;font-family:'Onest',system-ui,sans-serif;background:#35545B;color:#F3EEE8}
+button,input,textarea{font:inherit;color:inherit}
+a{color:#F3EEE8;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #35545B; font-family: 'Onest', system-ui, sans-serif; color: #F3EEE8; display: flex; flex-direction: column; gap: 14px; padding: 56px 20px 34px;">
+
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #D6E2E4;">Home screen · medium</span>
+<section aria-label="Habits widget" style="height: 170px; box-sizing: border-box; padding: 14px; border-radius: 26px; background: #0E1A1D; display: flex; flex-direction: column; gap: 10px;">
+<div style="display: flex; align-items: center; justify-content: space-between;">
+<span style="font-family: 'Unbounded', system-ui, sans-serif; font-size: 14px; font-weight: 600;">Today</span>
+<span style="font-size: 13px; font-weight: 700; color: #fb8b24; font-variant-numeric: tabular-nums;">{{doneN}}/6 done</span>
+</div>
+<div style="flex-grow: 1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+<sc-for list="{{mini}}" as="m" hint-placeholder-count="6">
+<button type="button" sc-camel-on-click="{{m.tap}}" aria-pressed="{{m.done}}" aria-label="{{m.aria}}" style="{{m.style}}">
+<svg width="18" height="18" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{m.icon}}"></path></svg>
+<span style="font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{m.name}}</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #D6E2E4; margin-top: 6px;">Home screen · small</span>
+<div style="display: flex; gap: 10px;">
+<section aria-label="Progress widget" style="width: 170px; height: 170px; box-sizing: border-box; padding: 14px; border-radius: 26px; background: #0E1A1D; display: flex; flex-direction: column; justify-content: space-between;">
+<div style="position: relative; width: 72px; height: 72px;">
+<svg width="72" height="72" sc-camel-view-box="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="30" fill="none" stroke="#22363B" stroke-width="8"></circle><circle cx="36" cy="36" r="30" fill="none" stroke="#fb8b24" stroke-width="8" stroke-linecap="round" stroke-dasharray="{{ringDash}}" transform="rotate(-90 36 36)"></circle></svg>
+<span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Unbounded', system-ui, sans-serif; font-size: 16px; font-weight: 600;">{{doneN}}/6</span>
+</div>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 12px; font-weight: 600; color: #9FB0B4;">Up next</span>
+<span style="font-size: 15px; font-weight: 700;">{{nextUp}}</span>
+</div>
+</section>
+<section aria-label="Streak widget" style="width: 170px; height: 170px; box-sizing: border-box; padding: 14px; border-radius: 26px; background: #fb8b24; color: #1A0B02; display: flex; flex-direction: column; justify-content: space-between;">
+<svg width="28" height="28" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .5 2 1.5 3 2.5 3 0-3-1-5 0-8z"></path></svg>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-family: 'Unbounded', system-ui, sans-serif; font-size: 36px; font-weight: 700; line-height: 1;">21</span>
+<span style="font-size: 14px; font-weight: 700;">days of reading</span>
+</div>
+</section>
+</div>
+
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #D6E2E4; margin-top: 6px;">Lock screen</span>
+<div style="display: flex; gap: 10px; align-items: center;">
+<div role="img" aria-label="{{doneN}} of 6 done" style="position: relative; width: 72px; height: 72px; border-radius: 36px; background: rgba(14, 26, 29, 0.55);">
+<svg width="72" height="72" sc-camel-view-box="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="28" fill="none" stroke="rgba(255,255,255,0.25)" stroke-width="6"></circle><circle cx="36" cy="36" r="28" fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" stroke-dasharray="{{lockDash}}" transform="rotate(-90 36 36)"></circle></svg>
+<span style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 700;">{{doneN}}/6</span>
+</div>
+<div style="flex-grow: 1; height: 72px; box-sizing: border-box; padding: 10px 14px; border-radius: 20px; background: rgba(14, 26, 29, 0.55); display: flex; flex-direction: column; justify-content: center; gap: 6px;">
+<span style="font-size: 14px; font-weight: 700;">Read · 10 of 20 min</span>
+<span aria-hidden="true" style="height: 6px; border-radius: 3px; background: rgba(255,255,255,0.25); overflow: hidden;"><span style="display: block; width: 50%; height: 6px; background: #FFFFFF;"></span></span>
+</div>
+</div>
+
+<span style="font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #D6E2E4; margin-top: 6px;">Reminder</span>
+<section aria-label="Reminder notification" style="box-sizing: border-box; padding: 14px; border-radius: 22px; background: rgba(243, 238, 232, 0.94); color: #0E1A1D; display: flex; flex-direction: column; gap: 12px;">
+<div style="display: flex; gap: 12px; align-items: flex-start;">
+<span style="width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px; background: #e36414; color: #1A0B02; display: flex; align-items: center; justify-content: center;">
+<svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"></path></svg>
+</span>
+<div style="display: flex; flex-direction: column; gap: 2px; flex-grow: 1;">
+<span style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 700;">Journal<span style="font-weight: 500; color: #4A5A5E;">21:30</span></span>
+<span style="font-size: 14px; color: #2B3A3E;">Two lines about today keep your 3-day streak going.</span>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+<button type="button" style="min-height: 44px; border-radius: 12px; border: none; background: #0E1A1D; color: #F3EEE8; font-size: 14px; font-weight: 700; cursor: pointer;">Done</button>
+<button type="button" style="min-height: 44px; border-radius: 12px; border: 1px solid #B9C4C6; background: transparent; color: #0E1A1D; font-size: 14px; font-weight: 700; cursor: pointer;">In 1 hour</button>
+<button type="button" style="min-height: 44px; border-radius: 12px; border: 1px solid #B9C4C6; background: transparent; color: #0E1A1D; font-size: 14px; font-weight: 700; cursor: pointer;">Skip today</button>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { done: { water: false, stretch: true, workout: true, read: false, journal: false, screens: false } };
+  }
+  renderVals() {
+    const { done } = this.state;
+    const H = [
+      { id: 'water', name: 'Water', color: '#0f4c5c', lift: '#6FB3C2', ink: '#FFFFFF', icon: 'M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z' },
+      { id: 'stretch', name: 'Stretch', color: '#5f0f40', lift: '#D07BAE', ink: '#FFFFFF', icon: 'M12 3.2a1.8 1.8 0 1 1 0 3.6a1.8 1.8 0 1 1 0-3.6zM4 9l8 2 8-2M12 11v4l-3 6M12 15l3 6' },
+      { id: 'workout', name: 'Workout', color: '#9a031e', lift: '#F0616F', ink: '#FFFFFF', icon: 'M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12' },
+      { id: 'read', name: 'Read', color: '#fb8b24', lift: '#fb8b24', ink: '#1A0B02', icon: 'M4 19V5a2 2 0 0 1 2-2h14v14H6a2 2 0 0 0-2 2a2 2 0 0 0 2 2h14' },
+      { id: 'journal', name: 'Journal', color: '#e36414', lift: '#F08A4B', ink: '#1A0B02', icon: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4' },
+      { id: 'screens', name: 'Screens', color: '#5f0f40', lift: '#D07BAE', ink: '#FFFFFF', icon: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z' }
+    ];
+    const mini = H.map((h) => {
+      const d = !!done[h.id];
+      return {
+        name: h.name, icon: h.icon, done: d,
+        aria: h.name + (d ? ', done' : ', tap to mark done'),
+        tap: () => this.setState({ done: { ...done, [h.id]: !d } }),
+        style: 'border-radius: 14px; padding: 0 10px; display: flex; align-items: center; gap: 6px; cursor: pointer; min-height: 44px; ' +
+          (d ? 'background: ' + h.color + '; border: 1px solid ' + h.color + '; color: ' + h.ink + ';' : 'background: #172529; border: 1px solid #2A3D42; color: #F3EEE8;')
+      };
+    });
+    const doneN = H.filter((h) => done[h.id]).length;
+    const next = H.find((h) => !done[h.id]);
+    const C1 = 2 * Math.PI * 30, C2 = 2 * Math.PI * 28;
+    return {
+      mini, doneN,
+      nextUp: next ? next.name : 'All done',
+      ringDash: (doneN / 6 * C1).toFixed(1) + ' ' + C1.toFixed(1),
+      lockDash: (doneN / 6 * C2).toFixed(1) + ' ' + C2.toFixed(1)
+    };
+  }
+}
+</script>
+
+
+</body></html>

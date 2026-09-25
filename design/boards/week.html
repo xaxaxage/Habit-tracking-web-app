@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Habit week</title>
+<script src="3b56c813-b7dd-4d66-b87d-12604d576137"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style></style>
+<style>
+body{margin:0;font-family:'Onest',system-ui,sans-serif;background:#0E1A1D;color:#F3EEE8}
+button,input,textarea{font:inherit;color:inherit}
+a{color:#F3EEE8;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 980px; box-sizing: border-box; position: relative; overflow: hidden; background: #0E1A1D; font-family: 'Onest', system-ui, sans-serif; color: #F3EEE8;">
+<main style="display: flex; flex-direction: column; gap: 16px; padding: 56px 20px 0;">
+
+<header style="display: flex; align-items: center; justify-content: space-between;">
+<div style="display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 14px; font-weight: 600; color: #9FB0B4;">21 – 27 September</span>
+<h1 style="margin: 0; font-family: 'Unbounded', system-ui, sans-serif; font-size: 28px; font-weight: 700;">This week</h1>
+</div>
+<div style="display: flex; gap: 8px;">
+<button type="button" aria-label="Previous week" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2A3D42; background: #172529; color: #F3EEE8; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer;">
+<svg width="18" height="18" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"></path></svg>
+</button>
+<button type="button" disabled="" aria-label="Next week" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2A3D42; background: #172529; color: #52666B; display: flex; align-items: center; justify-content: center; padding: 0;">
+<svg width="18" height="18" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"></path></svg>
+</button>
+</div>
+</header>
+
+<section aria-label="Weekly score" style="display: flex; align-items: center; gap: 16px; padding: 16px 18px; background: #172529; border: 1px solid #2A3D42; border-radius: 22px;">
+<span style="font-family: 'Unbounded', system-ui, sans-serif; font-size: 40px; font-weight: 700; font-variant-numeric: tabular-nums; color: #fb8b24;">{{score}}%</span>
+<div style="display: flex; flex-direction: column; gap: 2px;">
+<span style="font-size: 15px; font-weight: 700;">{{doneN}} of {{dueN}} check-ins</span>
+<span style="font-size: 13px; color: #9FB0B4;">Last week 69% · skipped days don't count against you</span>
+</div>
+</section>
+
+<div aria-hidden="true" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; padding: 0 12px;">
+<sc-for list="{{dayHeads}}" as="d" hint-placeholder-count="7">
+<span style="text-align: center; font-size: 12px; font-weight: 700; color: {{d.color}};">{{d.label}}</span>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px; margin-top: -8px;">
+<sc-for list="{{rows}}" as="r" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 8px; padding: 10px 12px 12px; background: #172529; border: 1px solid #2A3D42; border-radius: 18px;">
+<a href="HabitHistory.dc.html" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #F3EEE8;">
+<span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 700;"><span style="width: 10px; height: 10px; border-radius: 5px; background: {{r.lift}};"></span>{{r.name}}</span>
+<span style="font-size: 13px; font-weight: 700; color: #9FB0B4; font-variant-numeric: tabular-nums;">{{r.count}}</span>
+</a>
+<div role="group" aria-label="{{r.name}} by day" style="display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px;">
+<sc-for list="{{r.cells}}" as="c" hint-placeholder-count="7">
+<button type="button" sc-camel-on-click="{{c.tap}}" aria-label="{{c.aria}}" disabled="{{c.future}}" style="{{c.style}}">
+<sc-if value="{{c.isDone}}" hint-placeholder-val="{{true}}"><svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></sc-if>
+<sc-if value="{{c.isSkip}}" hint-placeholder-val="{{false}}"><svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M7 12h10"></path></svg></sc-if>
+<sc-if value="{{c.isPart}}" hint-placeholder-val="{{false}}"><span style="font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums;">{{c.part}}</span></sc-if>
+</button>
+</sc-for>
+</div>
+</div>
+</sc-for>
+</div>
+
+<div style="display: flex; flex-wrap: wrap; row-gap: 6px; gap: 14px; padding: 0 4px; font-size: 12px; font-weight: 600; color: #9FB0B4;">
+<span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 4px; background: #F3EEE8;"></span>Done</span>
+<span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; box-sizing: border-box; border-radius: 4px; border: 1.5px dashed #9FB0B4;"></span>Skipped</span>
+<span style="display: flex; align-items: center; gap: 6px;"><span style="width: 12px; height: 12px; border-radius: 4px; background: #22363B;"></span>Open</span>
+<span>Tap a day to change it</span>
+</div>
+</main>
+
+<nav aria-label="Main" style="position: absolute; left: 20px; right: 20px; bottom: 28px; display: flex; align-items: center; gap: 12px;">
+<div style="flex-grow: 1; height: 60px; box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 6px; background: #172529; border: 1px solid #2A3D42; border-radius: 30px;">
+<a href="Board.dc.html" style="flex-grow: 1; flex-basis: 0; height: 46px; border-radius: 23px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #C9D3D5; font-size: 14px; font-weight: 600;">
+<svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg>
+Today
+</a>
+<a href="Week.dc.html" aria-current="page" style="flex-grow: 1; flex-basis: 0; height: 46px; border-radius: 23px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #F3EEE8; color: #0E1A1D; font-size: 14px; font-weight: 700;">
+<svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>
+Week
+</a>
+</div>
+<a href="Describe.dc.html" aria-label="New habit" style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 30px; display: flex; align-items: center; justify-content: center; background: #fb8b24; color: #1A0B02;">
+<svg width="26" height="26" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:980}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    // d = done, s = skipped, n = open, p:x = partial label, f = future
+    this.state = {
+      grid: {
+        water: ['d', 'd', 'p:7/8', 'd', 'p:5/8', 'f', 'f'],
+        stretch: ['d', 'd', 'd', 'd', 'd', 'f', 'f'],
+        workout: ['d', 'n', 'd', 'n', 'd', 'f', 'f'],
+        read: ['d', 'd', 'd', 'd', 'p:10m', 'f', 'f'],
+        journal: ['d', 'd', 's', 'd', 'n', 'f', 'f'],
+        screens: ['d', 'd', 'n', 'd', 'n', 'f', 'f']
+      }
+    };
+  }
+  renderVals() {
+    const { grid } = this.state;
+    const H = [
+      { id: 'water', name: 'Water', color: '#0f4c5c', lift: '#6FB3C2', ink: '#FFFFFF' },
+      { id: 'stretch', name: 'Stretch', color: '#5f0f40', lift: '#D07BAE', ink: '#FFFFFF' },
+      { id: 'workout', name: 'Workout', color: '#9a031e', lift: '#F0616F', ink: '#FFFFFF', perWeek: 4 },
+      { id: 'read', name: 'Read', color: '#fb8b24', lift: '#fb8b24', ink: '#1A0B02' },
+      { id: 'journal', name: 'Journal', color: '#e36414', lift: '#F08A4B', ink: '#1A0B02' },
+      { id: 'screens', name: 'Screens off 23:00', color: '#5f0f40', lift: '#D07BAE', ink: '#FFFFFF' }
+    ];
+    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const next = { d: 's', s: 'n', n: 'd' };
+    let doneN = 0, dueN = 0;
+    const rows = H.map((h) => {
+      const cells = grid[h.id];
+      const done = cells.filter((c) => c === 'd').length;
+      const skipped = cells.filter((c) => c === 's').length;
+      const past = cells.filter((c) => c !== 'f').length;
+      let count, due;
+      if (h.perWeek) { due = h.perWeek; count = done + ' / ' + h.perWeek + ' this week'; }
+      else { due = past - skipped; count = done + ' / ' + due; }
+      doneN += Math.min(done, due); dueN += due;
+      return {
+        name: h.name, lift: h.lift, count,
+        cells: cells.map((c, i) => {
+          const isPart = c.startsWith('p:');
+          const base = 'height: 40px; border-radius: 10px; padding: 0; display: flex; align-items: center; justify-content: center; box-sizing: border-box; ';
+          let style, state;
+          if (c === 'd') { style = base + 'background: ' + h.color + '; border: 1.5px solid ' + h.color + '; color: ' + h.ink + '; cursor: pointer;'; state = 'done'; }
+          else if (c === 's') { style = base + 'background: transparent; border: 1.5px dashed #6E8186; color: #9FB0B4; cursor: pointer;'; state = 'skipped'; }
+          else if (c === 'f') { style = base + 'background: transparent; border: 1.5px solid #1C2C31; color: #52666B;'; state = 'upcoming'; }
+          else if (isPart) { style = base + 'background: #22363B; border: 1.5px solid ' + h.lift + '; color: #F3EEE8; cursor: pointer;'; state = 'partly done, ' + c.slice(2); }
+          else { style = base + 'background: #22363B; border: 1.5px solid #22363B; color: #9FB0B4; cursor: pointer;'; state = h.perWeek ? 'rest day' : 'open'; }
+          return {
+            style, future: c === 'f',
+            isDone: c === 'd', isSkip: c === 's', isPart, part: isPart ? c.slice(2) : '',
+            aria: h.name + ', ' + dayNames[i] + ': ' + state,
+            tap: () => {
+              if (c === 'f') return;
+              const v = next[isPart ? 'n' : c];
+              const arr = cells.slice(); arr[i] = v;
+              this.setState({ grid: { ...grid, [h.id]: arr } });
+            }
+          };
+        })
+      };
+    });
+    const dayHeads = ['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((label, i) => ({
+      label, color: i === 4 ? '#fb8b24' : (i > 4 ? '#52666B' : '#9FB0B4')
+    }));
+    return { rows, dayHeads, doneN, dueN, score: dueN ? Math.round(doneN / dueN * 100) : 0 };
+  }
+}
+</script>
+
+
+</body></html>

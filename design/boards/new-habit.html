@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>New habit</title>
+<script src="d42237d2-1682-4596-afd7-8a676a7c6b6e"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style></style>
+<style>
+body{margin:0;font-family:'Onest',system-ui,sans-serif;background:#0E1A1D;color:#F3EEE8}
+button,input,textarea{font:inherit;color:inherit}
+textarea::placeholder{color:#7F9195}
+a{color:#F3EEE8;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #0E1A1D; font-family: 'Onest', system-ui, sans-serif; color: #F3EEE8;">
+<main style="display: flex; flex-direction: column; gap: 18px; padding: 56px 20px 0;">
+
+<header style="display: flex; align-items: center; justify-content: space-between;">
+<a href="Board.dc.html" aria-label="Close" style="width: 44px; height: 44px; border-radius: 22px; border: 1px solid #2A3D42; background: #172529; color: #F3EEE8; display: flex; align-items: center; justify-content: center;">
+<svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M18 6L6 18M6 6l12 12"></path></svg>
+</a>
+<span style="font-size: 15px; font-weight: 700;">New habit</span>
+<span style="width: 44px; height: 44px;"></span>
+</header>
+
+<div style="display: flex; flex-direction: column; gap: 10px;">
+<label for="nl" style="font-family: 'Unbounded', system-ui, sans-serif; font-size: 22px; font-weight: 600; line-height: 1.3;">What do you want to do, and how often?</label>
+<textarea id="nl" rows="2" value="{{text}}" sc-camel-on-change="{{onText}}" placeholder="e.g. Read 20 min every evening" style="box-sizing: border-box; width: 100%; min-height: 84px; resize: none; padding: 14px 16px; border-radius: 18px; border: 1.5px solid #fb8b24; background: #172529; font-size: 19px; font-weight: 600; line-height: 1.35; outline: none;"></textarea>
+<div role="group" aria-label="Examples" style="display: flex; flex-wrap: wrap; gap: 8px;">
+<sc-for list="{{examples}}" as="ex" hint-placeholder-count="4">
+<button type="button" sc-camel-on-click="{{ex.pick}}" style="min-height: 36px; padding: 0 12px; border-radius: 18px; border: 1px solid #2A3D42; background: transparent; color: #C9D3D5; font-size: 13px; font-weight: 600; cursor: pointer;">{{ex.label}}</button>
+</sc-for>
+</div>
+</div>
+
+<section aria-label="Understood as" style="display: flex; flex-direction: column; gap: 10px;">
+<h2 style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #9FB0B4;">Understood as · tap to change</h2>
+<div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px;">
+<sc-for list="{{fields}}" as="f" hint-placeholder-count="6">
+<button type="button" style="min-height: 56px; box-sizing: border-box; padding: 8px 12px; border-radius: 16px; border: 1px solid #2A3D42; background: #172529; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; cursor: pointer; text-align: left;">
+<span style="font-size: 12px; font-weight: 600; color: #9FB0B4;">{{f.label}}</span>
+<span style="font-size: 15px; font-weight: 700; color: {{f.color}};">{{f.value}}</span>
+</button>
+</sc-for>
+</div>
+</section>
+
+<section aria-label="Preview" style="display: flex; flex-direction: column; gap: 10px;">
+<h2 style="margin: 0; font-size: 13px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #9FB0B4;">On your board</h2>
+<div style="display: flex; gap: 12px; align-items: stretch;">
+<div style="width: 165px; height: 124px; box-sizing: border-box; padding: 14px; border-radius: 22px; background: #172529; border: 1.5px solid #2A3D42; display: flex; flex-direction: column; justify-content: space-between; position: relative; overflow: hidden;">
+<span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: 30%; background: {{fillSoft}};"></span>
+<svg width="26" height="26" sc-camel-view-box="0 0 24 24" fill="none" stroke="{{lift}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="position: relative;"><path d="{{icon}}"></path></svg>
+<span style="position: relative; display: flex; flex-direction: column; gap: 2px;"><span style="font-size: 16px; font-weight: 700;">{{name}}</span><span style="font-size: 12px; font-weight: 600; opacity: 0.85;">{{tileMeta}}</span></span>
+</div>
+<div role="group" aria-label="Color" style="display: grid; grid-template-columns: repeat(2, 44px); gap: 10px; align-content: center;">
+<sc-for list="{{swatches}}" as="s" hint-placeholder-count="4">
+<button type="button" sc-camel-on-click="{{s.pick}}" aria-pressed="{{s.on}}" aria-label="{{s.label}}" style="width: 44px; height: 44px; border-radius: 22px; cursor: pointer; padding: 0; background: {{s.hex}}; border: 3px solid {{s.ring}};"></button>
+</sc-for>
+</div>
+</div>
+</section>
+</main>
+
+<div style="position: absolute; left: 20px; right: 20px; bottom: 34px;">
+<a href="Board.dc.html" style="height: 56px; border-radius: 18px; background: #fb8b24; color: #1A0B02; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 700;">Add to my board</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { text: 'Read 20 min every evening', color: null };
+  }
+  parse(t) {
+    let s = ' ' + (t || '') + ' ';
+    const out = { type: 'Yes / No', goal: 'Just do it', repeat: 'Every day', time: 'Anytime', reminder: 'Off' };
+    const take = (re) => { const m = s.match(re); if (m) s = s.replace(m[0], ' '); return m; };
+    let m = take(/\bat\s+(\d{1,2}[:.]\d{2})\b/i);
+    if (m) out.reminder = m[1].replace('.', ':');
+    m = take(/\b(\d+)\s*(?:x|times)\s*(?:a|per)\s*week\b/i);
+    if (m) out.repeat = m[1] + '× a week';
+    else if ((m = take(/\bweekdays\b|\bon weekdays\b/i))) out.repeat = 'Weekdays';
+    else if ((m = take(/\b(?:on\s+)?weekends?\b/i))) out.repeat = 'Weekends';
+    m = take(/\b(?:every|each|in the)\s+(morning|evening|night|afternoon)\b/i) || take(/\b(morning|evening|tonight|night)\b/i);
+    if (m) { const w = m[1].toLowerCase(); out.time = w === 'morning' ? 'Morning' : w === 'afternoon' ? 'Afternoon' : 'Evening'; }
+    take(/\b(?:every\s*day|daily|each day|a day|per day|every)\b/i);
+    m = take(/\b(\d+)\s*(min(?:ute)?s?|h(?:ours?)?|glass(?:es)?|pages?|km|steps|reps|push-?ups|times)\b/i);
+    if (m) {
+      const u = m[2].toLowerCase();
+      if (u.startsWith('min')) { out.type = 'Timer'; out.goal = m[1] + ' min'; }
+      else if (u.startsWith('h')) { out.type = 'Timer'; out.goal = m[1] + ' h'; }
+      else { out.type = 'Count'; out.goal = m[1] + ' ' + u.replace(/^glass$/, 'glass').replace(/^times$/, '×'); }
+      if (out.type === 'Count' && /push/.test(u)) out.goal = m[1] + ' push-ups';
+    }
+    s = s.replace(/\bof\b/gi, ' ').replace(/\s+/g, ' ').trim();
+    const unitName = out.type === 'Count' ? out.goal.replace(/^\d+\s*/, '') : '';
+    if (!s && unitName && unitName !== '×') s = unitName;
+    out.name = s ? s.charAt(0).toUpperCase() + s.slice(1) : 'New habit';
+    if (out.reminder === 'Off' && out.time !== 'Anytime') out.reminder = out.time === 'Morning' ? '07:30' : out.time === 'Afternoon' ? '14:00' : '21:30';
+    return out;
+  }
+  renderVals() {
+    const { text, color } = this.state;
+    const p = this.parse(text);
+    const PAL = [
+      { k: 'teal', hex: '#0f4c5c', lift: '#6FB3C2', label: 'Dark teal' },
+      { k: 'violet', hex: '#5f0f40', lift: '#D07BAE', label: 'Crimson violet' },
+      { k: 'crimson', hex: '#9a031e', lift: '#F0616F', label: 'Deep crimson' },
+      { k: 'orange', hex: '#fb8b24', lift: '#fb8b24', label: 'Princeton orange' }
+    ];
+    let h = 0; for (const ch of p.name) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+    const auto = PAL[h % PAL.length].k;
+    const cur = PAL.find((c) => c.k === (color || auto));
+    const n = parseInt(cur.hex.slice(1), 16);
+    const soft = 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',0.45)';
+    const ICON = {
+      Timer: 'M12 8v4l2.5 2.5M9 2h6M12 21a8 8 0 1 0 0-16a8 8 0 1 0 0 16z',
+      Count: 'M5 12h14M12 5v14',
+      'Yes / No': 'M5 12.5l4.5 4.5L19 7.5'
+    };
+    const examples = ['Drink 8 glasses of water', 'Workout 3 times a week', 'Meditate 10 min every morning', 'No coffee after 14:00']
+      .map((label) => ({ label, pick: () => this.setState({ text: label, color: null }) }));
+    const fields = [
+      { label: 'Name', value: p.name },
+      { label: 'Track as', value: p.type },
+      { label: 'Goal', value: p.goal },
+      { label: 'Repeat', value: p.repeat },
+      { label: 'Time of day', value: p.time },
+      { label: 'Reminder', value: p.reminder }
+    ].map((f) => ({ ...f, color: f.value === 'Off' || f.value === 'Just do it' || f.value === 'Anytime' ? '#C9D3D5' : '#F3EEE8' }));
+    return {
+      text, onText: (e) => this.setState({ text: e.target.value }),
+      examples, fields,
+      name: p.name,
+      tileMeta: (p.type === 'Yes / No' ? 'Tap when done' : '0 / ' + p.goal) + ' · ' + p.repeat.toLowerCase(),
+      icon: ICON[p.type], lift: cur.lift, fillSoft: p.type === 'Yes / No' ? 'transparent' : soft,
+      swatches: PAL.map((c) => ({ label: c.label, hex: c.hex, on: c.k === cur.k, ring: c.k === cur.k ? '#F3EEE8' : c.hex, pick: () => this.setState({ color: c.k }) }))
+    };
+  }
+}
+</script>
+
+
+</body></html>

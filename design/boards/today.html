@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>Habit board</title>
+<script src="58bab48b-bb5a-4cd2-b1b9-f83534b4e46c"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style></style>
+<style>
+body{margin:0;font-family:'Onest',system-ui,sans-serif;background:#0E1A1D;color:#F3EEE8}
+button,input,textarea{font:inherit;color:inherit}
+a{color:#F3EEE8;text-decoration:none}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; box-sizing: border-box; position: relative; overflow: hidden; background: #0E1A1D; font-family: 'Onest', system-ui, sans-serif; color: #F3EEE8;">
+<main style="display: flex; flex-direction: column; gap: 16px; padding: 56px 20px 0;">
+
+<header style="display: flex; align-items: flex-end; justify-content: space-between;">
+<div style="display: flex; flex-direction: column; gap: 4px;">
+<span style="font-size: 14px; font-weight: 600; color: #9FB0B4;">{{dateLine}}</span>
+<h1 style="margin: 0; font-family: 'Unbounded', system-ui, sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.01em;">{{title}}</h1>
+</div>
+<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+<span style="font-family: 'Unbounded', system-ui, sans-serif; font-size: 28px; font-weight: 600; font-variant-numeric: tabular-nums; color: #fb8b24;">{{left}}</span>
+<span style="font-size: 13px; font-weight: 600; color: #9FB0B4;">{{leftLabel}}</span>
+</div>
+</header>
+
+<div role="img" aria-label="{{segLabel}}" style="display: flex; gap: 4px;">
+<sc-for list="{{segments}}" as="s" hint-placeholder-count="6">
+<span style="flex-grow: 1; flex-basis: 0; height: 6px; border-radius: 3px; background: {{s.bg}};"></span>
+</sc-for>
+</div>
+
+<div role="group" aria-label="Day" style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px;">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="5">
+<button type="button" sc-camel-on-click="{{d.pick}}" aria-pressed="{{d.on}}" aria-label="{{d.aria}}" style="{{d.style}}">
+<span style="font-size: 12px; font-weight: 600; opacity: 0.8;">{{d.dow}}</span>
+<span style="font-family: 'Unbounded', system-ui, sans-serif; font-size: 16px; font-weight: 600;">{{d.date}}</span>
+<span style="font-size: 11px; font-weight: 700; opacity: 0.8; font-variant-numeric: tabular-nums;">{{d.score}}</span>
+</button>
+</sc-for>
+</div>
+
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+<sc-for list="{{tiles}}" as="t" hint-placeholder-count="6">
+<button type="button" sc-camel-on-click="{{t.tap}}" aria-label="{{t.aria}}" style="{{t.style}}">
+<span aria-hidden="true" style="position: absolute; left: 0; right: 0; bottom: 0; height: {{t.fillPct}}%; background: {{t.fill}};"></span>
+<span style="position: relative; display: flex; align-items: flex-start; justify-content: space-between;">
+<svg width="28" height="28" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: {{t.iconColor}};"><path d="{{t.icon}}"></path></svg>
+<sc-if value="{{t.full}}" hint-placeholder-val="{{false}}">
+<span style="width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; background: {{t.badgeBg}}; color: {{t.badgeFg}};"><svg width="16" height="16" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span>
+</sc-if>
+<sc-if value="{{t.notFull}}" hint-placeholder-val="{{true}}">
+<span style="display: flex; align-items: center; gap: 3px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; color: #F0A56A;"><svg width="13" height="13" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-4 2.5-5 .5 2 1.5 3 2.5 3 0-3-1-5 0-8z"></path></svg>{{t.streak}}</span>
+</sc-if>
+</span>
+<span style="position: relative; display: flex; flex-direction: column; gap: 3px; text-align: left;">
+<span style="font-size: 17px; font-weight: 700; line-height: 1.2;">{{t.name}}</span>
+<span style="font-size: 13px; font-weight: 600; opacity: 0.85; font-variant-numeric: tabular-nums;">{{t.meta}}</span>
+</span>
+</button>
+</sc-for>
+</div>
+<p style="margin: -4px 0 0; text-align: center; font-size: 13px; color: #9FB0B4;">Tap to log · <a href="HoldMenu.dc.html" style="color: #C9D3D5; text-decoration: underline;">hold a tile</a> to skip, add a note or open it</p>
+</main>
+
+<nav aria-label="Main" style="position: absolute; left: 20px; right: 20px; bottom: 28px; display: flex; align-items: center; gap: 12px;">
+<div style="flex-grow: 1; height: 60px; box-sizing: border-box; display: flex; align-items: center; gap: 6px; padding: 6px; background: #172529; border: 1px solid #2A3D42; border-radius: 30px;">
+<a href="Board.dc.html" aria-current="page" style="flex-grow: 1; flex-basis: 0; height: 46px; border-radius: 23px; display: flex; align-items: center; justify-content: center; gap: 8px; background: #F3EEE8; color: #0E1A1D; font-size: 14px; font-weight: 700;">
+<svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="2"></rect><rect x="13" y="4" width="7" height="7" rx="2"></rect><rect x="4" y="13" width="7" height="7" rx="2"></rect><rect x="13" y="13" width="7" height="7" rx="2"></rect></svg>
+Today
+</a>
+<a href="Week.dc.html" style="flex-grow: 1; flex-basis: 0; height: 46px; border-radius: 23px; display: flex; align-items: center; justify-content: center; gap: 8px; color: #C9D3D5; font-size: 14px; font-weight: 600;">
+<svg width="20" height="20" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"></rect><path d="M3.5 10h17M8 3v4M16 3v4"></path></svg>
+Week
+</a>
+</div>
+<a href="Describe.dc.html" aria-label="New habit" style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 30px; display: flex; align-items: center; justify-content: center; background: #fb8b24; color: #1A0B02;">
+<svg width="26" height="26" sc-camel-view-box="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>
+</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script="" data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      day: 4,
+      log: [
+        { water: 8, stretch: true, workout: true, read: 20, journal: true, screens: true },
+        { water: 8, stretch: true, workout: false, read: 25, journal: true, screens: true },
+        { water: 7, stretch: true, workout: true, read: 20, journal: false, screens: false },
+        { water: 8, stretch: true, workout: false, read: 30, journal: true, screens: true },
+        { water: 5, stretch: true, workout: true, read: 10, journal: false, screens: false }
+      ]
+    };
+  }
+  renderVals() {
+    const { day, log } = this.state;
+    const H = [
+      { id: 'water', name: 'Water', type: 'count', target: 8, unit: 'glasses', color: '#0f4c5c', lift: '#6FB3C2', onDark: true, streak: 12,
+        icon: 'M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z' },
+      { id: 'stretch', name: 'Stretch', type: 'check', meta: '10 min', color: '#5f0f40', lift: '#D07BAE', onDark: true, streak: 7,
+        icon: 'M12 3.2a1.8 1.8 0 1 1 0 3.6a1.8 1.8 0 1 1 0-3.6zM4 9l8 2 8-2M12 11v4l-3 6M12 15l3 6' },
+      { id: 'workout', name: 'Workout', type: 'weekly', perWeek: 4, color: '#9a031e', lift: '#F0616F', onDark: true, streak: 3,
+        icon: 'M6 7v10M18 7v10M3 10v4M21 10v4M6 12h12' },
+      { id: 'read', name: 'Read', type: 'timer', target: 20, step: 5, color: '#fb8b24', lift: '#fb8b24', onDark: false, streak: 21,
+        icon: 'M4 19V5a2 2 0 0 1 2-2h14v14H6a2 2 0 0 0-2 2a2 2 0 0 0 2 2h14' },
+      { id: 'journal', name: 'Journal', type: 'check', meta: 'Evening', color: '#e36414', lift: '#F08A4B', onDark: false, streak: 3,
+        icon: 'M4 20h4L19 9l-4-4L4 16zM13 7l4 4' },
+      { id: 'screens', name: 'Screens off 23:00', type: 'check', meta: 'Evening', color: '#5f0f40', lift: '#D07BAE', onDark: true, streak: 1,
+        icon: 'M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z' }
+    ];
+    const hex2rgba = (hex, a) => {
+      const n = parseInt(hex.slice(1), 16);
+      return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')';
+    };
+    const L = log[day];
+    const pctOf = (h, l) => {
+      if (h.type === 'count' || h.type === 'timer') return Math.min(1, l[h.id] / h.target);
+      return l[h.id] ? 1 : 0;
+    };
+    const set = (id, v) => {
+      const next = log.slice();
+      next[day] = { ...L, [id]: v };
+      this.setState({ log: next });
+    };
+    const weekWorkouts = log.filter((l) => l.workout).length;
+    const tiles = H.map((h) => {
+      const pct = pctOf(h, L);
+      const full = pct >= 1;
+      let meta, tap, aria;
+      if (h.type === 'count') {
+        meta = L[h.id] + ' / ' + h.target + ' ' + h.unit;
+        tap = () => set(h.id, full ? 0 : L[h.id] + 1);
+        aria = h.name + ', ' + meta + '. ' + (full ? 'Tap to reset' : 'Tap to add one');
+      } else if (h.type === 'timer') {
+        meta = L[h.id] + ' / ' + h.target + ' min' + (full ? '' : ' · +' + h.step);
+        tap = () => set(h.id, full ? 0 : L[h.id] + h.step);
+        aria = h.name + ', ' + L[h.id] + ' of ' + h.target + ' minutes. ' + (full ? 'Tap to reset' : 'Tap to add ' + h.step + ' minutes');
+      } else if (h.type === 'weekly') {
+        meta = weekWorkouts + ' of ' + h.perWeek + ' this week';
+        tap = () => set(h.id, !L[h.id]);
+        aria = h.name + ', ' + meta + (full ? ', done today' : '');
+      } else {
+        meta = full ? 'Done' : h.meta;
+        tap = () => set(h.id, !L[h.id]);
+        aria = h.name + (full ? ', done. Tap to undo' : ', not done. Tap to complete');
+      }
+      const ink = full ? (h.onDark ? '#FFFFFF' : '#1A0B02') : '#F3EEE8';
+      return {
+        name: h.name, meta, icon: h.icon, tap, aria, full, notFull: !full,
+        streak: h.streak,
+        fillPct: (pct * 100).toFixed(0),
+        fill: full ? h.color : hex2rgba(h.color, 0.45),
+        iconColor: full ? ink : h.lift,
+        badgeBg: h.onDark ? 'rgba(255,255,255,0.22)' : 'rgba(26,11,2,0.15)',
+        badgeFg: ink,
+        style: 'position: relative; overflow: hidden; height: 140px; box-sizing: border-box; padding: 16px; border-radius: 24px; cursor: pointer; ' +
+          'display: flex; flex-direction: column; justify-content: space-between; color: ' + ink + '; ' +
+          'background: #172529; border: 1.5px solid ' + (full ? h.color : '#2A3D42') + ';'
+      };
+    });
+    const segments = H.map((h) => ({ bg: pctOf(h, L) >= 1 ? (h.onDark ? h.lift : h.color) : '#2A3D42' }));
+    const doneN = H.filter((h) => pctOf(h, L) >= 1).length;
+    const meta = [
+      { dow: 'Mon', date: 21, full: 'Monday' }, { dow: 'Tue', date: 22, full: 'Tuesday' },
+      { dow: 'Wed', date: 23, full: 'Wednesday' }, { dow: 'Thu', date: 24, full: 'Thursday' },
+      { dow: 'Fri', date: 25, full: 'Friday' }
+    ];
+    const days = meta.map((m, i) => {
+      const n = H.filter((h) => pctOf(h, log[i]) >= 1).length;
+      const on = i === day;
+      return {
+        dow: i === 4 ? 'Today' : m.dow, date: m.date, score: n + '/' + H.length, on,
+        aria: m.full + ' ' + m.date + ' September, ' + n + ' of ' + H.length + ' done',
+        pick: () => this.setState({ day: i }),
+        style: 'height: 72px; border-radius: 18px; cursor: pointer; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; ' +
+          (on ? 'background: #F3EEE8; color: #0E1A1D; border: 1px solid #F3EEE8;' : 'background: #172529; color: #F3EEE8; border: 1px solid #2A3D42;')
+      };
+    });
+    const isToday = day === 4;
+    const left = H.length - doneN;
+    return {
+      tiles, segments, days,
+      title: isToday ? 'Today' : meta[day].full,
+      dateLine: isToday ? 'Friday, 25 September' : 'Editing ' + meta[day].date + ' September',
+      left: left === 0 ? 'All' : String(left),
+      leftLabel: left === 0 ? 'done' : 'to go',
+      segLabel: doneN + ' of ' + H.length + ' habits done'
+    };
+  }
+}
+</script>
+
+
+</body></html>
