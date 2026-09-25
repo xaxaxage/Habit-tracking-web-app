@@ -74,16 +74,22 @@ async function open(page: Page, s: Screen) {
   await s.open?.(page);
 }
 
-/** Elements whose box reaches past the left or right edge of the window. */
+/** Elements whose box reaches past the left or right edge of the window, or out of the button, link or label they're in. */
 function overflowing(page: Page) {
   return page.evaluate(() => {
     const width = document.documentElement.clientWidth;
     const out: string[] = [];
+    const name = (el: Element) => `${el.tagName.toLowerCase()}.${el.getAttribute('class') ?? ''} "${el.textContent?.trim().slice(0, 30)}"`;
     for (const el of document.querySelectorAll<HTMLElement>('body *')) {
       const r = el.getBoundingClientRect();
       if (r.width === 0 || r.height === 0 || el.closest('.sr-only')) continue;
-      if (r.right > width + 0.5 || r.left < -0.5) {
-        out.push(`${el.tagName.toLowerCase()}.${el.className} "${el.textContent?.trim().slice(0, 30)}" ${r.left.toFixed(0)}–${r.right.toFixed(0)} of ${width}`);
+      if (r.right > width + 0.5 || r.left < -0.5) out.push(`${name(el)} ${r.left.toFixed(0)}–${r.right.toFixed(0)} of ${width}`);
+      const control = el.parentElement?.closest('button, a, label, summary');
+      if (control) {
+        const c = control.getBoundingClientRect();
+        if (r.left < c.left - 1 || r.right > c.right + 1 || r.top < c.top - 1 || r.bottom > c.bottom + 1) {
+          out.push(`${name(el)} sticks out of ${name(control)}`);
+        }
       }
     }
     return { scroll: document.documentElement.scrollWidth - width, out: out.slice(0, 8) };

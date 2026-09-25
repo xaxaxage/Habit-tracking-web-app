@@ -1260,12 +1260,26 @@
   height: 8px;
   border-radius: 4px;
 }
+.swatch-card {
+  min-width: 0;
+  overflow: hidden;
+}
+/* Auto: the day and night previews share the space, and shrink with it. */
 .swatch-split {
+  flex: 1;
+  min-width: 0;
   display: flex;
   gap: 4px;
 }
 .swatch-split .swatch-preview {
+  flex: 1 1 0;
+  min-width: 0;
   padding: 8px 4px;
+}
+.swatch-split .swatch-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
 }
 .switch-row {
   min-height: 56px;
