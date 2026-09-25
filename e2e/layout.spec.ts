@@ -151,3 +151,14 @@ test('keyboard: every stop on Today shows where focus is', async ({ page }) => {
   // 5 days, 6 tiles, 4 links in the bottom bar.
   expect(seen.size).toBe(15);
 });
+
+test.describe('with a mouse', () => {
+  test.use({ isMobile: false, hasTouch: false, viewport: { width: 1280, height: 800 } });
+  test('the board says click and right-click, and right-click opens the options', async ({ page }) => {
+    await openWith(page, sampleData(), '#/');
+    await expect(page.getByText('Click to log · right-click a tile to skip, add a note or open it')).toBeVisible();
+    await expect(page.getByText('Tap to log')).toBeHidden();
+    await page.getByRole('button', { name: /^Read,/ }).click({ button: 'right' });
+    await expect(page.getByRole('dialog', { name: 'Read' })).toBeVisible();
+  });
+});

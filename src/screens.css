@@ -1323,3 +1323,15 @@
   line-height: 1.45;
   color: var(--ink-soft);
 }
+/* With a mouse, say click and right-click instead of tap and hold. */
+.mouse-only {
+  display: none;
+}
+@media (hover: hover) and (pointer: fine) {
+  .touch-only {
+    display: none;
+  }
+  .mouse-only {
+    display: inline;
+  }
+}

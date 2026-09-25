@@ -133,7 +133,13 @@ export function Today({ date, today }: { date: string; today: string }) {
             <p class="notice">Nothing is due {isToday ? 'today' : 'on this day'}. Enjoy the rest day.</p>
           )}
           <p id="board-hint" class="board-hint">
-            Tap to log · <u>hold a tile</u> to skip, add a note or open it<span class="sr-only"> (with a keyboard: Shift+Enter)</span>
+            <span class="touch-only">
+              Tap to log · <u>hold a tile</u> to skip, add a note or open it
+            </span>
+            <span class="mouse-only">
+              Click to log · <u>right-click a tile</u> to skip, add a note or open it
+            </span>
+            <span class="sr-only"> (with a keyboard: Shift+Enter)</span>
           </p>
           {board.other.length > 0 && (
             <>
