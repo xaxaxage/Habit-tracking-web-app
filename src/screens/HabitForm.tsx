@@ -1,9 +1,9 @@
-import { useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { Habit, HabitColor, HabitKind, Schedule, TimeOfDay } from '../lib/types';
 import { HABIT_COLORS, TIMES_OF_DAY } from '../lib/types';
 import { autoColor, defaultStep, parseHabit, type Draft } from '../lib/parse';
 import { fmt, goalLabel, KIND_LABEL, repeatLabel, TIME_LABEL, WEEKDAY_SHORT } from '../lib/habits';
-import { guessIcon, HABIT_ICONS } from '../lib/icons';
+import { guessIcon, HABIT_ICONS, ICON_GROUPS } from '../lib/icons';
 import { archiveHabit, createHabit, deleteHabit, MAX_NAME, restoreHabit, updateHabit } from '../lib/store';
 import { goBack, navigate } from '../lib/router';
 import { showToast } from '../lib/toast';
@@ -251,8 +251,14 @@ function FieldSheet({
     setSchedule(next.length === 7 ? { type: 'daily' } : { type: 'days', days: next });
   };
 
+  // Show the chosen icon, which may be far down the list.
+  useEffect(() => {
+    if (field === 'icon') document.querySelector('.icon-grid [aria-checked="true"]')?.scrollIntoView({ block: 'center' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
-    <Sheet labelledBy={titleId} onClose={onClose} class={`c-${form.color}`}>
+    <Sheet labelledBy={titleId} onClose={onClose} class={`c-${form.color}`} initialFocus={field === 'icon' ? '.icon-grid [aria-checked="true"]' : undefined}>
       <h2 id={titleId} class="sheet-title">
         {FIELD_TITLES[field === 'goal' ? 'goal' : field]}
       </h2>
@@ -384,19 +390,27 @@ function FieldSheet({
         </div>
       )}
 
-      {field === 'icon' && (
-        <div role="radiogroup" aria-label="Icon" class="icon-grid">
-          {HABIT_ICONS.map((i) => (
-            <button type="button" role="radio" aria-checked={form.icon === i.id} aria-label={i.label} class="option" style={{ minHeight: '52px' }} onClick={() => onChange({ icon: i.id })}>
-              <HabitGlyph icon={i.id} size={24} />
-            </button>
-          ))}
-        </div>
-      )}
+      {field === 'icon' &&
+        ICON_GROUPS.map((group, g) => (
+          <div class="icon-group">
+            <h3 id={`icon-group-${g}`} class="section-label">
+              {group}
+            </h3>
+            <div role="radiogroup" aria-labelledby={`icon-group-${g}`} class="icon-grid">
+              {HABIT_ICONS.filter((i) => i.group === group).map((i) => (
+                <button type="button" role="radio" aria-checked={form.icon === i.id} aria-label={i.label} class="option" onClick={() => onChange({ icon: i.id })}>
+                  <HabitGlyph icon={i.id} size={24} />
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
 
-      <button type="button" class="btn light" onClick={onClose}>
-        Done
-      </button>
+      <div class="sheet-foot">
+        <button type="button" class="btn light" onClick={onClose}>
+          Done
+        </button>
+      </div>
     </Sheet>
   );
 }

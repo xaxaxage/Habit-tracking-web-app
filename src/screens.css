@@ -396,6 +396,18 @@
   touch-action: none;
   flex-shrink: 0;
 }
+/* Done stays in reach at the bottom of a long sheet. It covers the sheet's
+   bottom padding, which sticky positioning otherwise leaves open. */
+.sheet-foot {
+  position: sticky;
+  bottom: calc(-1 * max(34px, calc(var(--safe-bottom) + 12px)));
+  margin: -8px 0 calc(-1 * max(34px, calc(var(--safe-bottom) + 12px)));
+  padding: 8px 0 max(34px, calc(var(--safe-bottom) + 12px));
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  flex-shrink: 0;
+}
 .grabber {
   width: 40px;
   height: 5px;
@@ -966,12 +978,18 @@
   text-align: center;
   font-size: 13px;
 }
+.icon-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .icon-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
   gap: 8px;
 }
 .icon-grid .option {
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;

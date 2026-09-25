@@ -18,7 +18,7 @@ tested sync, service worker, palettes, animations, Claude Desktop extension and 
   the strip below it shows the last five days: tap one to log an earlier day. Habits that aren't due today
   (weekend-only, paused) are listed below the board.
 - **Hold a tile** (or right-click, or Shift+Enter with a keyboard) – mark done or skip the day (the streak stays),
-  set an exact amount, add a note, or go to its week or its history.
+  set an exact amount, add a note, or go to its week or its history. Swipe the sheet down (or tap outside) to close it.
 - **Week** – every habit day by day. Tap a day to change it: open → done → skipped → open. A score for the week
   (skipped days don't count against you) against last week's; step back through earlier weeks.
 - **Habit history** – current and best streak, hit rate and average over the last 18 weeks, an 18-week heatmap,
@@ -28,7 +28,9 @@ tested sync, service worker, palettes, animations, Claude Desktop extension and 
   color, and see the tile as it will look. The same screen edits a habit, archives it (off the board, history
   kept) or deletes it.
 - **Kinds of habits** – yes/no, a count, or minutes; every day, on chosen weekdays, or N times a week (judged per
-  week: a skipped day lowers that week's goal by one); a time of day; one of five colors and 26 icons.
+  week: a skipped day lowers that week's goal by one); a time of day; one of five colors and 67 icons, grouped
+  (health, movement, mind, food and drink, learning and work, creative, home and money, people). The icon is
+  guessed from the name ("Walk the dog" gets a paw) and can be changed.
 - **Settings** – sync between devices (with the device list and Claude Desktop), appearance, weeks starting on
   Monday or Sunday, the order on the board, archived habits, backups, delete everything, and the app's version.
 - **Appearance** – eight palettes: Night (the design), Harbor, Matcha, Ocean, Lavender, Graphite, and the dark

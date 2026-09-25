@@ -333,3 +333,36 @@ test('choose how Today lays out the habits: tiles, compact or a list', async ({ 
   expect(ys.filter((y) => y === ys[0])).toHaveLength(3);
   await expect(tile(page, 'Workout')).toContainText('3/4 this week');
 });
+
+test('pick an icon from the groups; the chosen one is in view and Done stays in reach', async ({ page }) => {
+  await openWith(page, sampleData(), '#/new?text=Walk%20the%20dog');
+  await expect(page.getByRole('button', { name: /^Icon: Pet/ })).toBeVisible();
+  await page.getByRole('button', { name: /^Icon/ }).click();
+  const sheet = page.getByRole('dialog', { name: 'Icon' });
+  await expect(sheet).toBeVisible();
+  // Guessed from the name, far down the list: in view and focused.
+  const pet = sheet.getByRole('radio', { name: 'Pet' });
+  await expect(pet).toHaveAttribute('aria-checked', 'true');
+  await expect(pet).toBeInViewport();
+  await expect(pet).toBeFocused();
+  for (const group of ['Health', 'Movement', 'Mind', 'Food and drink', 'Learning and work', 'Creative', 'Home and money', 'People', 'Basics']) {
+    await expect(sheet.getByRole('radiogroup', { name: group })).toBeAttached();
+  }
+
+  // Pick one from the top; Done is on screen without scrolling back down.
+  await sheet.getByRole('radio', { name: 'Yoga' }).scrollIntoViewIfNeeded();
+  await sheet.getByRole('radio', { name: 'Yoga' }).click();
+  await expect(sheet.getByRole('radio', { name: 'Yoga' })).toHaveAttribute('aria-checked', 'true');
+  await expect(pet).toHaveAttribute('aria-checked', 'false');
+  const done = sheet.getByRole('button', { name: 'Done' });
+  await expect(done).toBeInViewport({ ratio: 1 });
+  // Nothing peeks out below it.
+  const box = (await done.boundingBox())!;
+  const below = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest('.sheet-foot, .icon-grid')?.className, [box.x + 30, box.y + box.height + 20]);
+  expect(below).toBe('sheet-foot');
+  await done.click();
+  await expect(page.getByRole('button', { name: /^Icon: Yoga/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Add to my board' }).click();
+  const saved = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!), STORAGE_KEY);
+  expect(saved.habits.find((h: { name: string }) => h.name === 'Walk the dog')).toMatchObject({ icon: 'yoga' });
+});
