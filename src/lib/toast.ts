@@ -5,6 +5,8 @@ export interface Toast {
   message: string;
   /** Survives the next screen change (for toasts shown right before navigating). */
   carry: boolean;
+  /** Stays until acted on or dismissed (e.g. "A new version is ready"). */
+  sticky?: boolean;
   action?: { label: string; run: () => void };
 }
 
@@ -17,16 +19,16 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
-export function showToast(message: string, action?: Toast['action'], opts: { carry?: boolean } = {}) {
-  current = { id: nextId++, message, action, carry: !!opts.carry };
+export function showToast(message: string, action?: Toast['action'], opts: { carry?: boolean; sticky?: boolean } = {}) {
+  current = { id: nextId++, message, action, carry: !!opts.carry, sticky: !!opts.sticky };
   clearTimeout(timer);
-  timer = setTimeout(dismissToast, action ? 5000 : 2600);
+  if (!opts.sticky) timer = setTimeout(dismissToast, action ? 5000 : 2600);
   emit();
 }
 
 /** Called on every screen change: drop toasts that belong to the screen being left. */
 export function toastNavigated() {
-  if (!current) return;
+  if (!current || current.sticky) return;
   if (current.carry) current = { ...current, carry: false };
   else dismissToast();
 }
