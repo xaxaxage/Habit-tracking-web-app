@@ -1,11 +1,11 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test, type Page } from '@playwright/test';
 import { manyHabits, sampleData } from './fixtures';
-import { openWith } from './helpers';
+import { openWith, syncedConfig } from './helpers';
 
 /** axe-core (WCAG 2.1 A and AA: names, labels, roles, contrast) on every screen. */
 
-const SCREENS: { name: string; hash: string; many?: boolean; empty?: boolean; open?: (page: Page) => Promise<void> }[] = [
+const SCREENS: { name: string; hash: string; many?: boolean; empty?: boolean; synced?: boolean; open?: (page: Page) => Promise<void> }[] = [
   { name: 'today', hash: '#/' },
   { name: 'today, earlier day', hash: '#/?date=2026-09-22' },
   { name: 'today, crowded', hash: '#/', many: true },
@@ -49,12 +49,29 @@ const SCREENS: { name: string; hash: string; many?: boolean; empty?: boolean; op
   },
   { name: 'edit habit', hash: '#/habit/journal00001/edit' },
   { name: 'settings', hash: '#/settings', many: true },
+  {
+    name: 'settings, sync key and relays',
+    hash: '#/settings',
+    synced: true,
+    open: async (page) => {
+      await page.getByRole('button', { name: 'Show sync key' }).click();
+      await page.locator('summary', { hasText: 'Relays' }).click();
+    },
+  },
+  {
+    name: 'settings, joining with a key',
+    hash: '#/settings',
+    open: async (page) => {
+      await page.getByRole('button', { name: 'I have a key' }).click();
+      await page.getByLabel('Sync key from your other device').fill('apple banana');
+    },
+  },
   { name: 'missing page', hash: '#/nope' },
 ];
 
 for (const s of SCREENS) {
   test(`no accessibility problems: ${s.name}`, async ({ page }) => {
-    await openWith(page, s.empty ? null : s.many ? manyHabits() : sampleData(), s.hash);
+    await openWith(page, s.empty ? null : s.many ? manyHabits() : sampleData(), s.hash, s.synced ? { sync: syncedConfig() } : {});
     await s.open?.(page);
     // Let animations settle so colors are final.
     await page.waitForTimeout(400);

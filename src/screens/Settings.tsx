@@ -15,6 +15,8 @@ import { todayKey } from '../lib/dates';
 import { saveFile } from '../lib/files';
 import { showToast } from '../lib/toast';
 import { ChevronDown, ChevronUp } from '../components/Icons';
+import { loadSyncConfig } from '../lib/sync/state';
+import { SyncSettings } from './SyncSettings';
 
 export function Card({ title, id, children }: { title: string; id: string; children: ComponentChildren }) {
   return (
@@ -170,7 +172,7 @@ function DataSettings() {
         type="button"
         class="link-btn danger"
         onClick={() => {
-          const synced = !!localStorage.getItem('habit-tracker:sync');
+          const synced = !!loadSyncConfig();
           const where = synced ? 'on this device and on every synced device' : 'on this device';
           if (!confirm(`Delete every habit, check-in and note ${where}? This can't be undone.`)) return;
           clearAll();
@@ -195,6 +197,8 @@ export function Settings() {
           </h1>
         </div>
       </header>
+
+      <SyncSettings />
 
       <HabitSettings />
 

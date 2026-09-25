@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { manyHabits, sampleData } from './fixtures';
-import { openWith } from './helpers';
+import { openWith, syncedConfig } from './helpers';
 
 /**
  * Layout rules for every screen: nothing ever scrolls or sticks out
@@ -12,6 +12,7 @@ interface Screen {
   name: string;
   hash: string;
   data?: 'sample' | 'many' | 'empty';
+  synced?: boolean;
   open?: (page: Page) => Promise<void>;
 }
 
@@ -46,12 +47,30 @@ const SCREENS: Screen[] = [
   { name: 'edit habit', hash: '#/habit/water000001/edit' },
   { name: 'settings', hash: '#/settings' },
   { name: 'settings, 34 habits', hash: '#/settings', data: 'many' },
+  { name: 'settings, syncing with other devices', hash: '#/settings', synced: true },
+  {
+    name: 'settings, sync key shown and relays open',
+    hash: '#/settings',
+    synced: true,
+    open: async (page) => {
+      await page.getByRole('button', { name: 'Show sync key' }).click();
+      await page.locator('summary', { hasText: 'Relays' }).click();
+    },
+  },
+  {
+    name: 'settings, new sync key',
+    hash: '#/settings',
+    open: async (page) => {
+      await page.getByRole('button', { name: 'Create sync key' }).click();
+      await expect(page.getByRole('list', { name: 'Sync key' }).getByRole('listitem')).toHaveCount(12);
+    },
+  },
   { name: 'missing page', hash: '#/nothing-here' },
 ];
 
 async function open(page: Page, s: Screen) {
   const data = s.data === 'empty' ? null : s.data === 'many' ? manyHabits() : sampleData();
-  await openWith(page, data, s.hash);
+  await openWith(page, data, s.hash, s.synced ? { sync: syncedConfig() } : {});
   await s.open?.(page);
 }
 
@@ -93,7 +112,9 @@ for (const s of SCREENS) {
         const out: string[] = [];
         const sel = 'a[href], button, input:not([type=file]), textarea, select, summary, [role=button], [tabindex]:not([tabindex="-1"])';
         for (const el of document.querySelectorAll<HTMLElement>(sel)) {
-          const r = el.getBoundingClientRect();
+          // A checkbox inside its label: the whole label is what you tap.
+          const target = el.matches('input[type=checkbox], input[type=radio]') ? el.closest('label') ?? el : el;
+          const r = target.getBoundingClientRect();
           if (r.width === 0 || el.closest('[inert]')) continue;
           if (r.width < 43.5 || r.height < 43.5) out.push(`${el.tagName.toLowerCase()} "${el.getAttribute('aria-label') ?? el.textContent?.trim().slice(0, 30)}" ${r.width.toFixed(1)}×${r.height.toFixed(1)}`);
         }

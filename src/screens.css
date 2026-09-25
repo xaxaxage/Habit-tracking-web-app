@@ -1089,3 +1089,105 @@
 .fold[open] > summary {
   margin-bottom: 8px;
 }
+
+/* ── Sync ─────────────────────────────────────────────────────────────── */
+.stack-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.mono {
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 15px;
+}
+.words {
+  margin: 0;
+  padding: 14px 16px;
+  list-style: none;
+  counter-reset: word;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  gap: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--r-field);
+}
+.words li {
+  counter-increment: word;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.words li::before {
+  content: counter(word) '. ';
+  color: var(--muted);
+  font-weight: 400;
+}
+.check-row {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.check-row input {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+.sync-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 5px;
+  flex-shrink: 0;
+  background: var(--muted);
+}
+.sync-status.synced .sync-dot {
+  background: var(--teal-lift);
+}
+.sync-status.syncing .sync-dot {
+  background: var(--accent);
+}
+.sync-status.offline .sync-dot,
+.sync-status.error .sync-dot {
+  background: var(--danger);
+}
+.device-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--raised);
+  color: var(--ink-soft);
+}
+.device-rename {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.device-rename .input {
+  flex: 1 1 140px;
+  min-width: 0;
+  min-height: 44px;
+}
+.device-row .row-sub {
+  overflow-wrap: anywhere;
+}

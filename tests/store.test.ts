@@ -200,7 +200,7 @@ describe('backups', () => {
     expect(restored.logs).toEqual(original.logs);
     expect(restored.habits.map((h) => ({ ...h, updatedAt: 0 }))).toEqual(original.habits.map((h) => ({ ...h, updatedAt: 0 })));
     // Deleted everywhere and then restored: the habits are newer than the deletion, so they stay.
-    for (const h of restored.habits) expect(restored.meta.deletedHabits[h.id]).toBeUndefined();
+    for (const h of restored.habits) expect(restored.meta.deletedHabits[h.id]).toBeLessThan(h.updatedAt);
   });
 
   it('refuses files that are not backups', () => {

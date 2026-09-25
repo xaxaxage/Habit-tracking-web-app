@@ -129,7 +129,7 @@ function cleanMeta(raw: any): SyncMeta {
 
 /** Validate data loaded from storage or an imported backup. Throws if it isn't app data. */
 export function parseData(raw: unknown): AppData {
-  if (!raw || typeof raw !== 'object' || (raw as any).version !== 1 || (raw as any).app === 'calorie-tracker') {
+  if (!raw || typeof raw !== 'object' || (raw as any).version !== 1) {
     throw new Error('This file is not a Habit Tracker backup.');
   }
   const r = raw as any;
@@ -234,9 +234,14 @@ export function newId(): string {
 
 let lastStamp = 0;
 
-/** Strictly increasing timestamps, so "most recent" is unambiguous. */
-export function stamp(): number {
-  lastStamp = Math.max(Date.now(), lastStamp + 1);
+/**
+ * Strictly increasing timestamps, so "most recent" is unambiguous. An edit is
+ * always stamped later than what it replaces (`after`), even when that came
+ * from a device whose clock runs ahead: otherwise merging would keep the old
+ * version and quietly undo the edit on every device.
+ */
+export function stamp(after = 0): number {
+  lastStamp = Math.max(Date.now(), lastStamp + 1, after + 1);
   return lastStamp;
 }
 
@@ -267,7 +272,7 @@ export function createHabit(input: HabitInput, today = todayKey()): Habit {
 }
 
 function replaceHabit(id: string, change: (h: Habit) => Habit) {
-  const habits = data.habits.map((h) => (h.id === id ? cleanHabit({ ...change(h), updatedAt: stamp() })! : h));
+  const habits = data.habits.map((h) => (h.id === id ? cleanHabit({ ...change(h), updatedAt: stamp(h.updatedAt) })! : h));
   commit({ ...data, habits });
 }
 
@@ -319,11 +324,12 @@ export function moveHabit(id: string, direction: -1 | 1) {
 /** Delete a habit and its check-ins (on every synced device, too). */
 export function deleteHabit(id: string) {
   const { [id]: _logs, ...logs } = data.logs;
+  const at = stamp(Math.max(getHabit(id)?.updatedAt ?? 0, data.meta.deletedHabits[id] ?? 0));
   commit({
     ...data,
     habits: data.habits.filter((h) => h.id !== id),
     logs,
-    meta: { ...data.meta, deletedHabits: { ...data.meta.deletedHabits, [id]: stamp() } },
+    meta: { ...data.meta, deletedHabits: { ...data.meta.deletedHabits, [id]: at } },
   });
 }
 
@@ -339,7 +345,7 @@ export function getLog(habitId: string, date: string): Log | undefined {
  */
 export function setLog(habitId: string, date: string, patch: Partial<Omit<Log, 'at'>>) {
   const prev = data.logs[habitId]?.[date];
-  const merged = { ...(prev ?? { value: 0 }), ...patch, at: stamp() };
+  const merged = { ...(prev ?? { value: 0 }), ...patch, at: stamp(prev?.at) };
   if (patch.value !== undefined && patch.value > 0 && patch.skipped === undefined) merged.skipped = false;
   const log = cleanLog(merged)!;
   if (isEmptyLog(prev) && isEmptyLog(log) && !prev) return;
@@ -392,7 +398,7 @@ export function cycleDay(h: Habit, date: string) {
 
 export function updateSettings(patch: Partial<Settings>) {
   const meta = { ...data.meta };
-  if (patch.weekStart !== undefined && patch.weekStart !== data.settings.weekStart) meta.settingsAt = stamp();
+  if (patch.weekStart !== undefined && patch.weekStart !== data.settings.weekStart) meta.settingsAt = stamp(meta.settingsAt);
   commit({ ...data, settings: { ...data.settings, ...patch }, meta });
 }
 
@@ -410,10 +416,10 @@ export function backupJson(source: AppData = data): string {
  */
 export function restoreBackup(next: AppData) {
   const deleted = data.meta.deletedHabits;
-  const habits = next.habits.map((h) => (deleted[h.id] >= h.updatedAt ? { ...h, updatedAt: stamp() } : h));
-  const deletedHabits = Object.fromEntries(
-    Object.entries({ ...deleted, ...next.meta.deletedHabits }).filter(([id]) => !habits.some((h) => h.id === id)),
-  );
+  const habits = next.habits.map((h) => (deleted[h.id] >= h.updatedAt ? { ...h, updatedAt: stamp(deleted[h.id]) } : h));
+  // Keep every deletion known here (the restored habits are newer than theirs).
+  const deletedHabits = { ...next.meta.deletedHabits };
+  for (const [id, at] of Object.entries(deleted)) deletedHabits[id] = Math.max(at, deletedHabits[id] ?? 0);
   commit({
     ...next,
     habits,
@@ -424,7 +430,7 @@ export function restoreBackup(next: AppData) {
 
 /** Delete every habit and check-in (on every synced device, too). Settings stay. */
 export function clearAll() {
-  const t = stamp();
+  const t = stamp(Math.max(0, ...data.habits.map((h) => h.updatedAt)));
   const deletedHabits = { ...data.meta.deletedHabits };
   for (const h of data.habits) deletedHabits[h.id] = t;
   commit({ ...data, habits: [], logs: {}, meta: { ...data.meta, deletedHabits } });
