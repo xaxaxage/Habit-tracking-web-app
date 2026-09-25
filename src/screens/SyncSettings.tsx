@@ -418,6 +418,29 @@ export function SyncSettings() {
       <DeviceList devices={config?.devices ?? {}} />
 
       <details class="fold">
+        <summary>Use with Claude Desktop</summary>
+        <div class="stack-form">
+          <p class="hint">
+            Ask Claude on your computer how your habits are going, or check in by just saying it ("I read for 25 minutes").
+            It uses these same habits, through sync.
+          </p>
+          <ol class="steps">
+            <li>Download the extension below.</li>
+            <li>Open the file with Claude Desktop (double-click it, or drag it into Settings → Extensions) and install.</li>
+            <li>When it asks for the sync key, paste your 12 words.</li>
+          </ol>
+          <a class="btn quiet" href="./mcp/habit-tracker.mcpb" download="habit-tracker.mcpb">
+            Download the Claude Desktop extension
+          </a>
+          {config && (
+            <button type="button" class="btn quiet" onClick={() => copy(config.phrase)}>
+              Copy the 12 words
+            </button>
+          )}
+        </div>
+      </details>
+
+      <details class="fold">
         <summary>Relays ({config?.relays.length ?? 0})</summary>
         <div class="stack-form">
           <p class="hint">

@@ -25,6 +25,14 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - name: Check the Claude Desktop extension with the official mcpb tool
+        run: |
+          mkdir -p "$RUNNER_TEMP/mcpb/ext"
+          cd "$RUNNER_TEMP/mcpb"
+          npm install --no-save --silent @anthropic-ai/mcpb@2
+          cd ext
+          unzip -q "$GITHUB_WORKSPACE/dist/mcp/habit-tracker.mcpb"
+          ../node_modules/.bin/mcpb validate manifest.json
       - run: npx playwright install --with-deps chromium
       - run: npx playwright test
       - uses: actions/upload-artifact@v4
