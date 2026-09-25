@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import type { AppData, Habit, HabitColor, HabitKind, Log, Pause, Schedule, Settings, SyncMeta, TimeOfDay } from './types';
-import { HABIT_COLORS, HABIT_KINDS, TIMES_OF_DAY } from './types';
+import { BOARD_LAYOUTS, HABIT_COLORS, HABIT_KINDS, TIMES_OF_DAY } from './types';
 import { addDays, isDateKey, todayKey } from './dates';
 import { isIconId } from './icons';
 import { isDone, isEmptyLog } from './habits';
@@ -29,7 +29,7 @@ export function emptyData(): AppData {
     version: 1,
     habits: [],
     logs: {},
-    settings: { weekStart: 'mon', theme: DEFAULT_THEME, animations: true },
+    settings: { weekStart: 'mon', theme: DEFAULT_THEME, animations: true, layout: 'tiles' },
     meta: emptyMeta(),
   };
 }
@@ -148,6 +148,7 @@ export function parseData(raw: unknown): AppData {
       weekStart: r.settings?.weekStart === 'sun' ? 'sun' : 'mon',
       theme: typeof r.settings?.theme === 'string' && /^[a-z0-9-]{1,60}$/.test(r.settings.theme) ? r.settings.theme : empty.settings.theme,
       animations: r.settings?.animations !== false,
+      layout: BOARD_LAYOUTS.includes(r.settings?.layout) ? r.settings.layout : 'tiles',
     },
     meta,
   };
@@ -423,7 +424,7 @@ export function restoreBackup(next: AppData) {
   commit({
     ...next,
     habits,
-    settings: { ...next.settings, theme: data.settings.theme, animations: data.settings.animations },
+    settings: { ...next.settings, theme: data.settings.theme, animations: data.settings.animations, layout: data.settings.layout },
     meta: { ...next.meta, deletedHabits },
   });
 }

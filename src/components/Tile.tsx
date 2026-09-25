@@ -1,19 +1,20 @@
 import type { Tile } from '../lib/habits';
+import type { BoardLayout } from '../lib/types';
 import { fmt, isWeekly, minutesLabel, TIME_LABEL } from '../lib/habits';
 import { Check, Flame, HabitGlyph } from './Icons';
 import { useLongPress } from './Common';
 
 /** The small line under a habit's name on its tile. */
-export function tileMeta(t: Tile): string {
+export function tileMeta(t: Tile, short = false): string {
   const h = t.habit;
   const v = t.log && !t.log.skipped ? t.log.value : 0;
   if (t.status === 'skipped') return 'Skipped';
-  if (isWeekly(h)) return `${t.week!.done} of ${h.schedule.times} this week`;
+  if (isWeekly(h)) return short ? `${t.week!.done}/${h.schedule.times} this week` : `${t.week!.done} of ${h.schedule.times} this week`;
   if (h.kind === 'count') return `${fmt(v)} / ${fmt(h.target)}${h.unit ? ` ${h.unit}` : ''}`;
   if (h.kind === 'timer') {
     const full = t.status === 'done';
     const amount = h.target >= 60 ? `${minutesLabel(v)} / ${minutesLabel(h.target)}` : `${v} / ${h.target} min`;
-    return full ? amount : `${amount} · +${h.step}`;
+    return full || short ? amount : `${amount} · +${h.step}`;
   }
   if (t.status === 'done') return 'Done';
   return h.time !== 'anytime' ? TIME_LABEL[h.time] : 'Tap when done';
@@ -40,12 +41,14 @@ export function TileView({
   onTap,
   onOptions,
   quiet,
+  layout = 'tiles',
 }: {
   tile: Tile;
   meta?: string;
   onTap: () => void;
   onOptions: () => void;
   quiet?: boolean;
+  layout?: BoardLayout;
 }) {
   const press = useLongPress(onOptions);
   const full = tile.status === 'done';
@@ -63,9 +66,10 @@ export function TileView({
       onClick={onTap}
       {...press}
     >
-      <span class="fill" aria-hidden="true" style={{ height: `${Math.round(fill * 100)}%` }} />
+      {/* In a list the fill grows from the left; on tiles, from the bottom. */}
+      <span class="fill" aria-hidden="true" style={{ [layout === 'list' ? 'width' : 'height']: `${Math.round(fill * 100)}%` }} />
       <span class="tile-top">
-        <HabitGlyph icon={tile.habit.icon} size={28} class="tile-icon" />
+        <HabitGlyph icon={tile.habit.icon} size={layout === 'tiles' ? 28 : 24} class="tile-icon" />
         {full ? (
           <span class="tile-badge">
             <Check size={16} strokeWidth={3} />
@@ -81,7 +85,7 @@ export function TileView({
       </span>
       <span class="tile-text">
         <span class="tile-name">{tile.habit.name}</span>
-        <span class="tile-meta">{meta ?? tileMeta(tile)}</span>
+        <span class="tile-meta">{meta ?? tileMeta(tile, layout === 'compact')}</span>
       </span>
     </button>
   );

@@ -1358,3 +1358,106 @@
     display: inline;
   }
 }
+
+/* ── Today layouts ────────────────────────────────────────────────────────
+   "tiles" is the design. "compact" fits three or more smaller tiles in a
+   row; "list" is one row per habit, filling from the left. */
+.tiles.compact {
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+  gap: 8px;
+}
+.tiles.compact .tile {
+  height: 112px;
+  padding: 12px;
+  border-radius: 20px;
+}
+.tiles.compact .tile-name {
+  font-size: 14px;
+}
+.tiles.compact .tile-meta {
+  font-size: 12px;
+}
+.tiles.compact .streak {
+  font-size: 12px;
+}
+.tiles.compact .tile-badge {
+  width: 24px;
+  height: 24px;
+}
+.tiles.list {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+}
+.tiles.list .tile {
+  height: auto;
+  min-height: 64px;
+  padding: 10px 14px;
+  border-radius: 18px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+.tiles.list .tile-top {
+  display: contents;
+}
+.tiles.list .tile-icon {
+  position: relative;
+  order: 0;
+}
+.tiles.list .tile-text {
+  order: 1;
+  flex: 1;
+  gap: 2px;
+}
+.tiles.list .tile-name {
+  font-size: 16px;
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+.tiles.list .streak,
+.tiles.list .tile-badge {
+  position: relative;
+  order: 2;
+}
+.tiles.list .fill {
+  top: 0;
+  right: auto;
+  height: auto;
+  width: 0;
+  transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* The layout picker in Settings: a small drawing of each layout. */
+.layout-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+.layout-preview {
+  height: 64px;
+  border-radius: 11px;
+  padding: 8px;
+  background: var(--surface);
+  display: grid;
+  gap: 4px;
+}
+.layout-preview i {
+  border-radius: 4px;
+  background: var(--raised);
+}
+.layout-preview i:nth-child(3n + 1) {
+  background: var(--teal);
+}
+.layout-preview i:nth-child(3n + 2) {
+  background: var(--crimson);
+}
+.layout-preview.tiles {
+  grid-template-columns: repeat(2, 1fr);
+}
+.layout-preview.compact {
+  grid-template-columns: repeat(3, 1fr);
+}
+.layout-preview.list {
+  grid-template-columns: 1fr;
+}

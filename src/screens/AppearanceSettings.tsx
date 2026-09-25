@@ -1,4 +1,5 @@
 import { updateSettings, useData } from '../lib/store';
+import type { BoardLayout } from '../lib/types';
 import { AUTO_THEME, HABIT_FILLS, PALETTES, type ThemeBase } from '../lib/theme';
 import { useReducedMotion } from '../lib/motion';
 import { Check } from '../components/Icons';
@@ -29,8 +30,14 @@ function AutoSwatch() {
   );
 }
 
+const LAYOUTS: { id: BoardLayout; name: string; cells: number; hint: string }[] = [
+  { id: 'tiles', name: 'Tiles', cells: 4, hint: 'Big tiles, two in a row, as in the original design.' },
+  { id: 'compact', name: 'Compact', cells: 6, hint: 'Smaller tiles, three or more in a row: more habits at a glance.' },
+  { id: 'list', name: 'List', cells: 3, hint: 'One row per habit, filling from the left. Good for many habits.' },
+];
+
 export function AppearanceSettings() {
-  const { theme, animations } = useData().settings;
+  const { theme, animations, layout } = useData().settings;
   const reduced = useReducedMotion();
   const options = [
     { id: PALETTES[0].id, name: PALETTES[0].name, swatch: <Swatch base={PALETTES[0].base} /> },
@@ -65,6 +72,34 @@ export function AppearanceSettings() {
           ? 'Auto uses Harbor by day and Night when your device is in dark mode.'
           : 'Night is the original design. Palettes apply to this device only.'}
       </p>
+
+      <div class="field">
+        <span class="field-label" id="layout-label">
+          Today layout
+        </span>
+        <div class="layout-grid" role="radiogroup" aria-labelledby="layout-label">
+          {LAYOUTS.map((l) => (
+            <button
+              type="button"
+              role="radio"
+              aria-checked={layout === l.id}
+              class="palette-option"
+              onClick={() => updateSettings({ layout: l.id })}
+            >
+              <span class={`layout-preview ${l.id}`} aria-hidden="true">
+                {Array.from({ length: l.cells }, () => (
+                  <i />
+                ))}
+              </span>
+              <span class="palette-name">
+                {layout === l.id && <Check size={14} strokeWidth={3} />}
+                {l.name}
+              </span>
+            </button>
+          ))}
+        </div>
+        <p class="hint">{LAYOUTS.find((l) => l.id === layout)?.hint}</p>
+      </div>
 
       <label class="switch-row">
         <input

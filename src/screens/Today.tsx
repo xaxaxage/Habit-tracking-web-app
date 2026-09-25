@@ -49,6 +49,7 @@ export function Today({ date, today }: { date: string; today: string }) {
   const data = useData();
   const [open, setOpen] = useState<string | null>(null);
   const board = boardFor(data, date, today);
+  const layout = data.settings.layout;
   const habits = boardHabits(data);
   const isToday = date === today;
   const openHabit = open ? data.habits.find((h) => h.id === open) : undefined;
@@ -124,9 +125,9 @@ export function Today({ date, today }: { date: string; today: string }) {
       ) : (
         <>
           {board.due.length > 0 ? (
-            <div class="tiles">
+            <div class={`tiles ${layout}`}>
               {board.due.map((t) => (
-                <TileView key={t.habit.id} tile={t} onTap={() => tap(t)} onOptions={() => setOpen(t.habit.id)} />
+                <TileView key={t.habit.id} tile={t} layout={layout} onTap={() => tap(t)} onOptions={() => setOpen(t.habit.id)} />
               ))}
             </div>
           ) : (
@@ -144,9 +145,10 @@ export function Today({ date, today }: { date: string; today: string }) {
           {board.other.length > 0 && (
             <>
               <h2 class="section-label other-label">Not due {isToday ? 'today' : 'this day'}</h2>
-              <div class="tiles">
+              <div class={`tiles ${layout}`}>
                 {board.other.map((t) => (
                   <TileView
+                    layout={layout}
                     key={t.habit.id}
                     tile={t}
                     quiet

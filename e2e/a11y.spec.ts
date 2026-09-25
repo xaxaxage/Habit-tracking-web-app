@@ -5,11 +5,21 @@ import { openWith, syncedConfig } from './helpers';
 
 /** axe-core (WCAG 2.1 A and AA: names, labels, roles, contrast) on every screen. */
 
-const SCREENS: { name: string; hash: string; many?: boolean; empty?: boolean; synced?: boolean; open?: (page: Page) => Promise<void> }[] = [
+const SCREENS: {
+  name: string;
+  hash: string;
+  many?: boolean;
+  empty?: boolean;
+  synced?: boolean;
+  layout?: 'compact' | 'list';
+  open?: (page: Page) => Promise<void>;
+}[] = [
   { name: 'today', hash: '#/' },
   { name: 'today, earlier day', hash: '#/?date=2026-09-22' },
   { name: 'today, crowded', hash: '#/', many: true },
   { name: 'today, empty', hash: '#/', empty: true },
+  { name: 'today, compact', hash: '#/', many: true, layout: 'compact' },
+  { name: 'today, list', hash: '#/', many: true, layout: 'list' },
   {
     name: 'hold a tile (count)',
     hash: '#/',
@@ -71,7 +81,9 @@ const SCREENS: { name: string; hash: string; many?: boolean; empty?: boolean; sy
 
 for (const s of SCREENS) {
   test(`no accessibility problems: ${s.name}`, async ({ page }) => {
-    await openWith(page, s.empty ? null : s.many ? manyHabits() : sampleData(), s.hash, s.synced ? { sync: syncedConfig() } : {});
+    let data = s.empty ? null : s.many ? manyHabits() : sampleData();
+    if (data && s.layout) data = { ...data, settings: { ...data.settings, layout: s.layout } };
+    await openWith(page, data, s.hash, s.synced ? { sync: syncedConfig() } : {});
     await s.open?.(page);
     // Let animations settle so colors are final.
     await page.waitForTimeout(400);

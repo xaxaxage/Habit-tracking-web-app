@@ -65,6 +65,11 @@ export interface Log {
 
 export type WeekStart = 'mon' | 'sun';
 
+/** How the habits are laid out on Today: the design's big tiles, smaller tiles, or a list. */
+export type BoardLayout = 'tiles' | 'compact' | 'list';
+
+export const BOARD_LAYOUTS: BoardLayout[] = ['tiles', 'compact', 'list'];
+
 export interface Settings {
   /** Synced between devices. */
   weekStart: WeekStart;
@@ -72,6 +77,8 @@ export interface Settings {
   theme: string;
   /** Gentle motion (this device only; also off when the system asks for reduced motion). */
   animations: boolean;
+  /** How Today lays out the habits (this device only). */
+  layout: BoardLayout;
 }
 
 /** Bookkeeping that lets two devices merge their changes. */

@@ -13,6 +13,7 @@ interface Screen {
   hash: string;
   data?: 'sample' | 'many' | 'empty';
   synced?: boolean;
+  layout?: 'compact' | 'list';
   open?: (page: Page) => Promise<void>;
 }
 
@@ -21,6 +22,8 @@ const SCREENS: Screen[] = [
   { name: 'today, an earlier day', hash: '#/?date=2026-09-23' },
   { name: 'today, 34 habits with long names', hash: '#/', data: 'many' },
   { name: 'today, no habits', hash: '#/', data: 'empty' },
+  { name: 'today, compact, 34 habits', hash: '#/', data: 'many', layout: 'compact' },
+  { name: 'today, list, 34 habits', hash: '#/', data: 'many', layout: 'list' },
   {
     name: 'hold a tile',
     hash: '#/',
@@ -69,7 +72,8 @@ const SCREENS: Screen[] = [
 ];
 
 async function open(page: Page, s: Screen) {
-  const data = s.data === 'empty' ? null : s.data === 'many' ? manyHabits() : sampleData();
+  let data = s.data === 'empty' ? null : s.data === 'many' ? manyHabits() : sampleData();
+  if (data && s.layout) data = { ...data, settings: { ...data.settings, layout: s.layout } };
   await openWith(page, data, s.hash, s.synced ? { sync: syncedConfig() } : {});
   await s.open?.(page);
 }

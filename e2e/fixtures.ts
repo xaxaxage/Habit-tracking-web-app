@@ -115,7 +115,7 @@ export function sampleData(): AppData {
       [journal.id]: journalLogs,
       [screens.id]: screensLogs,
     },
-    settings: { weekStart: 'mon', theme: 'night', animations: false },
+    settings: { weekStart: 'mon', theme: 'night', animations: false, layout: 'tiles' },
     meta: { deletedHabits: {}, settingsAt: 0 },
   };
 }

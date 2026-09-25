@@ -34,6 +34,8 @@ tested sync, service worker, palettes, animations, Claude Desktop extension and 
 - **Appearance** – eight palettes: Night (the design), Harbor, Matcha, Ocean, Lavender, Graphite, and the dark
   Espresso and OLED black, plus Auto (Harbor by day, Night in dark mode). Text colors are adjusted until they are
   readable in every palette.
+- **Today layout** – the design's big tiles (two in a row), **Compact** tiles (three or more in a row) or a
+  **List** (one row per habit, filling from the left): **Settings → Appearance → Today layout**, per device.
 - **Animations** – quiet motion that shows what changed: screens fade in, tiles fill, checks pop, the sheet slides
   up, buttons give a little under your finger. **Settings → Appearance → Animations** turns it off; it's also off
   while the device's Reduce Motion setting is on.

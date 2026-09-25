@@ -302,3 +302,34 @@ test('with a mouse, drag the grabber down to close the sheet', async ({ browser 
   await expect(sheet).toBeHidden();
   await context.close();
 });
+
+test('choose how Today lays out the habits: tiles, compact or a list', async ({ page }) => {
+  await openWith(page, sampleData(), '#/settings');
+  await expect(page.getByRole('radio', { name: 'Tiles' })).toHaveAttribute('aria-checked', 'true');
+  await page.getByRole('radio', { name: 'List' }).click();
+  await page.getByRole('link', { name: 'Today' }).click();
+  await expect(page.locator('.tiles').first()).toHaveClass(/list/);
+  // Rows are full width, and a row fills from the left as you log.
+  const water = tile(page, 'Water');
+  const row = (await water.boundingBox())!;
+  expect(row.width).toBeGreaterThan(340);
+  await water.click();
+  await expect(water).toContainText('6 / 8 glasses');
+  const fill = (await water.locator('.fill').boundingBox())!;
+  expect(fill.width / row.width).toBeCloseTo(0.75, 1);
+  // Options still open on hold.
+  await water.click({ button: 'right' });
+  await expect(page.getByRole('dialog', { name: 'Water' })).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  await page.getByRole('link', { name: 'Settings' }).click();
+  await page.getByRole('radio', { name: 'Compact' }).click();
+  await page.reload();
+  await page.getByRole('link', { name: 'Today' }).click();
+  const tiles = page.locator('.tiles.compact .tile');
+  await expect(tiles).toHaveCount(6);
+  // Three in a row on an iPhone.
+  const ys = await tiles.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+  expect(ys.filter((y) => y === ys[0])).toHaveLength(3);
+  await expect(tile(page, 'Workout')).toContainText('3/4 this week');
+});
