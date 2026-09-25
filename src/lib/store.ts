@@ -435,7 +435,7 @@ export function applyMerged(next: AppData) {
   commit(next);
 }
 
-/** Replace everything (tests and first-run samples). */
+/** Replace everything, e.g. with test data (checked and put in order like anything loaded). */
 export function replaceData(next: AppData) {
-  commit(next);
+  commit(parseData(JSON.parse(JSON.stringify(next))));
 }

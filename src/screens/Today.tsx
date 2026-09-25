@@ -1,7 +1,6 @@
 import { useState } from 'preact/hooks';
-import type { Habit } from '../lib/types';
 import type { Tile } from '../lib/habits';
-import { boardFor, boardHabits, currentPause, firstDay, repeatLabel } from '../lib/habits';
+import { boardFor, boardHabits, currentPause, firstDay, isPaused, repeatLabel } from '../lib/habits';
 import { restoreLog, tapHabit, useData } from '../lib/store';
 import { addDays, dayMonthLong, fromKey, longDate, shortWeekday, weekday } from '../lib/dates';
 import { href, navigate } from '../lib/router';
@@ -37,11 +36,12 @@ function Empty() {
   );
 }
 
-/** Why a habit isn't on the board for the day. */
-function notDueMeta(h: Habit, date: string, first: string): string {
+/** Why a habit isn't due on the day, unless something was logged anyway. */
+function notDueMeta(t: Tile, date: string, first: string): string | undefined {
+  const h = t.habit;
+  if (isPaused(h, date)) return currentPause(h) ? 'Paused' : 'Paused then';
+  if (t.status !== 'open') return undefined;
   if (date < first) return 'Not started yet';
-  if (currentPause(h) && (currentPause(h)!.from <= date)) return 'Paused';
-  if (h.pauses.some((p) => date >= p.from && (!p.to || date <= p.to))) return 'Paused then';
   return `Not today · ${repeatLabel(h.schedule)}`;
 }
 
@@ -144,7 +144,7 @@ export function Today({ date, today }: { date: string; today: string }) {
                     key={t.habit.id}
                     tile={t}
                     quiet
-                    meta={t.status === 'open' ? notDueMeta(t.habit, date, firstDay(t.habit, data.logs[t.habit.id])) : undefined}
+                    meta={notDueMeta(t, date, firstDay(t.habit, data.logs[t.habit.id]))}
                     onTap={() => tap(t)}
                     onOptions={() => setOpen(t.habit.id)}
                   />

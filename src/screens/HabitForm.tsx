@@ -67,11 +67,11 @@ export function HabitForm({ habit, initialText = '' }: { habit?: Habit; initialT
     if (habit) {
       const changedGoal = input.kind !== habit.kind || input.target !== habit.target;
       updateHabit(habit.id, { ...input, ...(changedGoal ? {} : { step: habit.step }) });
-      showToast('Changes saved');
+      showToast('Changes saved', undefined, { carry: true });
       goBack(`/habit/${habit.id}`);
     } else {
       createHabit(input);
-      showToast(`${input.name} is on your board`);
+      showToast(`${input.name} is on your board`, undefined, { carry: true });
       navigate('/', { replace: true });
     }
   };
@@ -185,7 +185,7 @@ export function HabitForm({ habit, initialText = '' }: { habit?: Habit; initialT
               class="btn dashed"
               onClick={() => {
                 archiveHabit(habit.id);
-                showToast(`${habit.name} archived. Find it in Settings.`);
+                showToast(`${habit.name} archived. Find it in Settings.`, undefined, { carry: true });
                 navigate('/', { replace: true });
               }}
             >
@@ -198,7 +198,7 @@ export function HabitForm({ habit, initialText = '' }: { habit?: Habit; initialT
             onClick={() => {
               if (!confirm(`Delete "${habit.name}" and all its check-ins and notes? This can't be undone.`)) return;
               deleteHabit(habit.id);
-              showToast(`${habit.name} deleted`);
+              showToast(`${habit.name} deleted`, undefined, { carry: true });
               navigate('/', { replace: true });
             }}
           >
