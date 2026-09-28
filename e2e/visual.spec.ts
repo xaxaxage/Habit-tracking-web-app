@@ -34,7 +34,7 @@ const BOARDS: Board[] = [
     title: 'Hold a tile',
     hash: '#/',
     max: 0.06,
-    why: 'the real board shows behind the sheet (the mockup draws placeholder squares)',
+    why: 'the real board shows behind the sheet (the mockup draws placeholder squares); an Edit button next to the name',
     prepare: async (page) => {
       await page.getByRole('button', { name: /^Workout/ }).click({ button: 'right' });
       await page.getByLabel('Note for today').fill('Legs and core, 45 min');

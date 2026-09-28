@@ -18,7 +18,8 @@ tested sync, service worker, palettes, animations, Claude Desktop extension and 
   the strip below it shows the last five days: tap one to log an earlier day. Habits that aren't due today
   (weekend-only, paused) are listed below the board.
 - **Hold a tile** (or right-click, or Shift+Enter with a keyboard) – mark done or skip the day (the streak stays),
-  set an exact amount, add a note, or go to its week or its history. Swipe the sheet down (or tap outside) to close it.
+  set an exact amount, add a note, go to its week or its history, or **Edit** it. Swipe the sheet down (or tap outside)
+  to close it.
 - **Week** – every habit day by day. Tap a day to change it: open → done → skipped → open. A score for the week
   (skipped days don't count against you) against last week's; step back through earlier weeks.
 - **Habit history** – current and best streak, hit rate and average over the last 18 weeks, an 18-week heatmap,

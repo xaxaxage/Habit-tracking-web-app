@@ -367,6 +367,28 @@ test('pick an icon from the groups; the chosen one is in view and Done stays in 
   expect(saved.habits.find((h: { name: string }) => h.name === 'Walk the dog')).toMatchObject({ icon: 'yoga' });
 });
 
+test('edit a habit straight from its sheet on Today, and give it one of the new colors', async ({ page }) => {
+  await openWith(page, sampleData(), '#/');
+  await tile(page, 'Water').click({ button: 'right' });
+  const sheet = page.getByRole('dialog', { name: 'Water' });
+  await sheet.getByRole('link', { name: 'Edit Water' }).click();
+  await expect(sheet).toBeHidden();
+  await expect(page).toHaveURL(/#\/habit\/water000001\/edit$/);
+  await expect(page.getByRole('button', { name: /^Name: Water/ })).toBeVisible();
+
+  const colors = page.getByRole('group', { name: 'Color' }).getByRole('button');
+  await expect(colors).toHaveCount(12);
+  await page.getByRole('button', { name: 'Cobalt' }).click();
+  await expect(page.getByRole('button', { name: 'Cobalt' })).toHaveAttribute('aria-pressed', 'true');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+
+  // Back on Today, in the new color.
+  await expect(page).toHaveURL(/#\/$/);
+  await expect(tile(page, 'Water')).toHaveClass(/\bc-blue\b/);
+  const saved = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!), STORAGE_KEY);
+  expect(saved.habits.find((h: { name: string }) => h.name === 'Water')).toMatchObject({ color: 'blue' });
+});
+
 test('a color or icon from a newer version shows as teal and a check mark, and is kept', async ({ page }) => {
   const data = sampleData();
   const water = data.habits.find((h) => h.name === 'Water')!;

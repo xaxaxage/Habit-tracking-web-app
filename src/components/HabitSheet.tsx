@@ -5,7 +5,7 @@ import { getData, getLog, setNote, setValue, toggleDone, toggleSkip, useData } f
 import { shortDate, shortWeekday, weekStartOf } from '../lib/dates';
 import { href, navigate } from '../lib/router';
 import { Sheet } from './Common';
-import { Bars, Calendar, Check, HabitGlyph, Minus, Plus, Skip } from './Icons';
+import { Bars, Calendar, Check, HabitGlyph, Minus, Pencil, Plus, Skip } from './Icons';
 
 /** "3 of 4 this week · done today" */
 function statusLine(h: Habit, date: string, today: string): string {
@@ -25,7 +25,7 @@ function statusLine(h: Habit, date: string, today: string): string {
   return streak > 0 ? `${streak}-day streak · ${state}` : state.charAt(0).toUpperCase() + state.slice(1);
 }
 
-/** Options for one habit on one day: done, skip, an exact amount, a note, and links to the week and its history. */
+/** Options for one habit on one day: done, skip, an exact amount, a note, and links to editing it, the week and its history. */
 export function HabitSheet({ habit, date, today, onClose }: { habit: Habit; date: string; today: string; onClose: () => void }) {
   useData();
   const h = habit;
@@ -55,6 +55,19 @@ export function HabitSheet({ habit, date, today, onClose }: { habit: Habit; date
           </h2>
           <span class="sheet-status">{statusLine(h, date, today)}</span>
         </div>
+        <a
+          class="pill-btn sheet-edit"
+          href={`#/habit/${h.id}/edit`}
+          aria-label={`Edit ${h.name}`}
+          onClick={(e) => {
+            e.preventDefault();
+            onClose();
+            navigate(`/habit/${h.id}/edit`);
+          }}
+        >
+          <Pencil size={18} />
+          Edit
+        </a>
       </div>
 
       <div class="action-grid">
