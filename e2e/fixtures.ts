@@ -1,4 +1,5 @@
 import type { AppData, Habit, Log } from '../src/lib/types';
+import { HABIT_COLORS } from '../src/lib/types';
 
 /**
  * The design's sample data: six habits on Friday 25 September 2026, with
@@ -122,7 +123,7 @@ export function sampleData(): AppData {
 
 export const STORAGE_KEY = 'habit-tracker:v1';
 
-/** 34 habits, some with very long names, for crowded-board tests. */
+/** 34 habits, some with very long names, in every color (done, partly done and open), for crowded-board tests. */
 export function manyHabits(): AppData {
   const data = sampleData();
   const long = [
@@ -132,18 +133,19 @@ export function manyHabits(): AppData {
     'No sugar in coffee, tea or anything else I drink today',
     'Walk 10,000 steps',
   ];
-  const colors = ['teal', 'violet', 'crimson', 'orange', 'ember'] as const;
   for (let i = 0; i < 28; i++) {
     const id = `extra${String(i).padStart(7, '0')}`;
     data.habits.push({
       ...data.habits[i % 6],
       id,
       name: `${long[i % long.length]}${i >= long.length ? ` ${i}` : ''}`.slice(0, 60),
-      color: colors[i % 5],
+      color: HABIT_COLORS[Math.floor(i / 2) % HABIT_COLORS.length],
       order: 10 + i,
       schedule: i % 7 === 3 ? { type: 'days', days: [5, 6] } : data.habits[i % 6].schedule,
     });
-    data.logs[id] = { [TODAY]: { value: i % 3 === 0 ? data.habits[i % 6].target : 0, at: Date.parse(`${TODAY}T08:00:00Z`) } };
+    const base = data.habits[i % 6];
+    const value = i % 3 === 0 ? base.target : i % 3 === 1 && base.kind !== 'check' ? Math.round(base.target / 2) : 0;
+    data.logs[id] = { [TODAY]: { value, at: Date.parse(`${TODAY}T08:00:00Z`) } };
   }
   return data;
 }

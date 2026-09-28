@@ -61,6 +61,15 @@ function cleanPauses(raw: unknown): Pause[] {
     .slice(-200);
 }
 
+/**
+ * A color or icon this version doesn't know, from a newer version on another
+ * device: kept as it is, so this device never syncs it back as the default,
+ * and shown as teal or a check mark until this device updates.
+ */
+function isNewerId(value: unknown): value is string {
+  return typeof value === 'string' && /^[a-z][a-z0-9-]{0,23}$/.test(value);
+}
+
 /** A valid habit with its fields in a fixed order, or undefined. */
 export function cleanHabit(raw: any): Habit | undefined {
   if (!raw || typeof raw !== 'object' || !isHabitId(raw.id)) return undefined;
@@ -78,8 +87,8 @@ export function cleanHabit(raw: any): Habit | undefined {
     step: kind === 'check' ? 1 : num(raw.step) > 0 ? Math.min(target, num(raw.step)) : defaultStep(kind, target),
     schedule: cleanSchedule(raw.schedule),
     time: TIMES_OF_DAY.includes(raw.time) ? raw.time : 'anytime',
-    color: HABIT_COLORS.includes(raw.color) ? raw.color : 'teal',
-    icon: isIconId(raw.icon) ? raw.icon : 'check',
+    color: HABIT_COLORS.includes(raw.color) || isNewerId(raw.color) ? raw.color : 'teal',
+    icon: isIconId(raw.icon) || isNewerId(raw.icon) ? raw.icon : 'check',
     order: num(raw.order),
     start: isDateKey(raw.start) ? raw.start : todayKey(new Date(createdAt)),
     pauses: cleanPauses(raw.pauses),

@@ -7,6 +7,7 @@ import { href, navigate } from '../lib/router';
 import { showToast } from '../lib/toast';
 import { HabitSheet } from '../components/HabitSheet';
 import { TileView } from '../components/Tile';
+import { BRIGHT_COLORS } from '../lib/theme';
 
 export const EXAMPLES = ['Drink 8 glasses of water', 'Workout 3 times a week', 'Meditate 10 min every morning', 'No coffee after 14:00'];
 
@@ -90,7 +91,7 @@ export function Today({ date, today }: { date: string; today: string }) {
           {seg.map((t) => (
             <span
               class={`c-${t.habit.color} ${t.status === 'done' ? 'done' : t.status === 'skipped' || t.status === 'met' ? 'skipped' : ''}`}
-              style={t.status === 'done' ? { '--seg': t.habit.color === 'orange' || t.habit.color === 'ember' ? 'var(--c)' : 'var(--c-lift)' } : undefined}
+              style={t.status === 'done' ? { '--seg': BRIGHT_COLORS.includes(t.habit.color) ? 'var(--c)' : 'var(--c-lift)' } : undefined}
             />
           ))}
         </div>

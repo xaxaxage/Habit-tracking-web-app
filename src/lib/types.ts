@@ -7,10 +7,13 @@ export type TimeOfDay = 'anytime' | 'morning' | 'afternoon' | 'evening';
 
 export const TIMES_OF_DAY: TimeOfDay[] = ['anytime', 'morning', 'afternoon', 'evening'];
 
-/** The habit colors from the design; each palette derives its own shades of them. */
-export type HabitColor = 'teal' | 'violet' | 'crimson' | 'orange' | 'ember';
+/**
+ * Habit colors: the design's five, then more in the same spirit. Each palette
+ * derives its own shades of them. Ids are stored with each habit, so they never change.
+ */
+export type HabitColor = 'teal' | 'violet' | 'crimson' | 'orange' | 'ember' | 'gold' | 'green' | 'sky' | 'blue' | 'purple' | 'pink' | 'slate';
 
-export const HABIT_COLORS: HabitColor[] = ['teal', 'violet', 'crimson', 'orange', 'ember'];
+export const HABIT_COLORS: HabitColor[] = ['teal', 'violet', 'crimson', 'orange', 'ember', 'gold', 'green', 'sky', 'blue', 'purple', 'pink', 'slate'];
 
 /**
  * When a habit is due. Weekdays are numbered from Monday = 0 to Sunday = 6,

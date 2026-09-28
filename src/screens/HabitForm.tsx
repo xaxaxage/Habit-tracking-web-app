@@ -19,6 +19,13 @@ const COLOR_NAMES: Record<HabitColor, string> = {
   crimson: 'Deep crimson',
   orange: 'Princeton orange',
   ember: 'Spanish orange',
+  gold: 'Saffron',
+  green: 'Forest green',
+  sky: 'Sky blue',
+  blue: 'Cobalt',
+  purple: 'Royal purple',
+  pink: 'Rose',
+  slate: 'Slate',
 };
 
 const FIELD_TITLES: Record<FieldKey, string> = {

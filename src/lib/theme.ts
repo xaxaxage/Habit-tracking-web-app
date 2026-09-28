@@ -18,16 +18,22 @@ export interface ThemeBase {
   accent: string;
 }
 
-export const TOKEN_NAMES = [
+const BASE_TOKEN_NAMES = [
   'bg', 'surface', 'raised', 'line', 'line-strong', 'line-dashed', 'line-faint',
   'ink', 'ink-soft', 'muted', 'faint', 'disabled', 'on-ink',
   'accent', 'accent-text', 'on-accent', 'focus', 'flame', 'danger', 'scrim', 'shadow',
-  'teal', 'teal-lift', 'teal-ink', 'violet', 'violet-lift', 'violet-ink', 'crimson', 'crimson-lift', 'crimson-ink',
-  'orange', 'orange-lift', 'orange-ink', 'ember', 'ember-lift', 'ember-ink',
   'soft-fill',
 ] as const;
 
-export type TokenName = (typeof TOKEN_NAMES)[number];
+/** Each habit color's fill, its lighter "lift" for lines and icons on cards, and text on the fill. */
+type HabitToken = HabitColor | `${HabitColor}-lift` | `${HabitColor}-ink`;
+
+export type TokenName = (typeof BASE_TOKEN_NAMES)[number] | HabitToken;
+
+export const TOKEN_NAMES: readonly TokenName[] = [
+  ...BASE_TOKEN_NAMES,
+  ...HABIT_COLORS.flatMap((c) => [c, `${c}-lift`, `${c}-ink`] as const),
+];
 export type Tokens = Record<TokenName, string>;
 
 export interface Palette {
@@ -38,17 +44,30 @@ export interface Palette {
   tokens?: Partial<Tokens>;
 }
 
-/** The habit colors from the design (fills); the same in every palette. */
+/** The habit colors (fills); the same in every palette. The first five are the design's. */
 export const HABIT_FILLS: Record<HabitColor, string> = {
   teal: '#0f4c5c',
   violet: '#5f0f40',
   crimson: '#9a031e',
   orange: '#fb8b24',
   ember: '#e36414',
+  gold: '#d9a011',
+  green: '#2d6a4f',
+  sky: '#3d8fc6',
+  blue: '#233d8b',
+  purple: '#6a3fa0',
+  pink: '#e8729f',
+  slate: '#4f5d6b',
 };
 
-/** The design's own shades (src/styles.css has the same as defaults). */
-const NIGHT_TOKENS: Tokens = {
+/** Bright fills, which show as they are where dark ones need their lighter shade (the day's progress bar). */
+export const BRIGHT_COLORS: HabitColor[] = HABIT_COLORS.filter((c) => luminance(HABIT_FILLS[c]) > 0.2);
+
+/**
+ * The design's own shades (src/styles.css has the same as defaults). Its
+ * habit colors are exact; the ones added later are derived like in any palette.
+ */
+const NIGHT_TOKENS: Partial<Tokens> = {
   bg: '#0e1a1d',
   surface: '#172529',
   raised: '#22363b',

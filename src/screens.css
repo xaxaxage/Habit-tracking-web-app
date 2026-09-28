@@ -24,6 +24,41 @@
   --c-lift: var(--ember-lift);
   --c-ink: var(--ember-ink);
 }
+.c-gold {
+  --c: var(--gold);
+  --c-lift: var(--gold-lift);
+  --c-ink: var(--gold-ink);
+}
+.c-green {
+  --c: var(--green);
+  --c-lift: var(--green-lift);
+  --c-ink: var(--green-ink);
+}
+.c-sky {
+  --c: var(--sky);
+  --c-lift: var(--sky-lift);
+  --c-ink: var(--sky-ink);
+}
+.c-blue {
+  --c: var(--blue);
+  --c-lift: var(--blue-lift);
+  --c-ink: var(--blue-ink);
+}
+.c-purple {
+  --c: var(--purple);
+  --c-lift: var(--purple-lift);
+  --c-ink: var(--purple-ink);
+}
+.c-pink {
+  --c: var(--pink);
+  --c-lift: var(--pink-lift);
+  --c-ink: var(--pink-ink);
+}
+.c-slate {
+  --c: var(--slate);
+  --c-lift: var(--slate-lift);
+  --c-ink: var(--slate-ink);
+}
 
 /* ── Bottom navigation ────────────────────────────────────────────────── */
 .nav {

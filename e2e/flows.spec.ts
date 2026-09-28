@@ -366,3 +366,20 @@ test('pick an icon from the groups; the chosen one is in view and Done stays in 
   const saved = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!), STORAGE_KEY);
   expect(saved.habits.find((h: { name: string }) => h.name === 'Walk the dog')).toMatchObject({ icon: 'yoga' });
 });
+
+test('a color or icon from a newer version shows as teal and a check mark, and is kept', async ({ page }) => {
+  const data = sampleData();
+  const water = data.habits.find((h) => h.name === 'Water')!;
+  Object.assign(water, { color: 'sunset', icon: 'surfboard' });
+  await openWith(page, data, '#/');
+  const colors = await tile(page, 'Water').evaluate((el) => {
+    const s = getComputedStyle(el);
+    const root = getComputedStyle(document.documentElement);
+    return [s.getPropertyValue('--c').trim(), root.getPropertyValue('--teal').trim()];
+  });
+  expect(colors[0]).toBe(colors[1]);
+  await expect(tile(page, 'Water').locator('svg path').first()).toHaveAttribute('d', 'M5 12.5l4.5 4.5L19 7.5');
+  await tile(page, 'Water').click();
+  const saved = await page.evaluate((k) => JSON.parse(localStorage.getItem(k)!), STORAGE_KEY);
+  expect(saved.habits.find((h: { name: string }) => h.name === 'Water')).toMatchObject({ color: 'sunset', icon: 'surfboard' });
+});

@@ -75,6 +75,31 @@
   --ember: #e36414;
   --ember-lift: #f08a4b;
   --ember-ink: #1a0b02;
+  --gold: #d9a011;
+  --gold-lift: #e6c164;
+  --gold-ink: #161002;
+  --green: #2d6a4f;
+  --green-lift: #85a898;
+  --green-ink: #ffffff;
+  --sky: #3d8fc6;
+  --sky-lift: #81b6da;
+  --sky-ink: #060e14;
+  --blue: #233d8b;
+  --blue-lift: #919fc6;
+  --blue-ink: #ffffff;
+  --purple: #6a3fa0;
+  --purple-lift: #ad95ca;
+  --purple-ink: #ffffff;
+  --pink: #e8729f;
+  --pink-lift: #f0a3c1;
+  --pink-ink: #170b10;
+  --slate: #4f5d6b;
+  --slate-lift: #98a1a9;
+  --slate-ink: #ffffff;
+  /* A habit color from a newer version of the app shows as teal. */
+  --c: var(--teal);
+  --c-lift: var(--teal-lift);
+  --c-ink: var(--teal-ink);
   /* How strongly a partly done tile is filled. */
   --soft-fill: 45%;
 

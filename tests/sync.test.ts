@@ -156,6 +156,14 @@ describe('merging two devices', () => {
     const habits = parsePart({ kind: 'habits', habits: [{ id: 'ok1234', name: 'Run', kind: 'evil' }, { id: '!!', name: 'x' }], deleted: [{ id: 'gone12', at: 5 }, { id: 'x' }] });
     expect(habits).toMatchObject({ habits: [{ id: 'ok1234', kind: 'check' }], deleted: [{ id: 'gone12', at: 5 }] });
   });
+
+  it('passes on a color or icon only a newer version knows, unchanged', () => {
+    const newer = withData([habit('surf0001', { name: 'Surf', color: 'sunset' as Habit['color'], icon: 'surfboard' })]);
+    const here = syncInto(withData([]), newer);
+    expect(here.habits[0]).toMatchObject({ color: 'sunset', icon: 'surfboard' });
+    // Nothing to send back: the parts this device builds are the same.
+    expect(partsJson(here)).toBe(partsJson(newer));
+  });
 });
 
 describe('the store, as sync sees it', () => {

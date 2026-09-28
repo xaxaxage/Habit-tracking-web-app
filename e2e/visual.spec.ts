@@ -53,7 +53,7 @@ const BOARDS: Board[] = [
     title: 'New habit in one sentence',
     hash: '#/new?text=Read%2020%20min%20every%20evening',
     max: 0.05,
-    why: '"Icon" instead of "Reminder"; five colors; icon picked from the name',
+    why: '"Icon" instead of "Reminder"; twelve colors; icon picked from the name',
   },
 ];
 

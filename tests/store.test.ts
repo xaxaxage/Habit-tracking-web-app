@@ -213,7 +213,7 @@ describe('backups', () => {
     const data = parseData({
       version: 1,
       habits: [
-        { id: 'ok123456', name: '  Walk  ', kind: 'count', target: 'x', schedule: { type: 'days', days: [9, 1, 1] }, color: 'pink' },
+        { id: 'ok123456', name: '  Walk  ', kind: 'count', target: 'x', schedule: { type: 'days', days: [9, 1, 1] }, color: 'Hot pink!', icon: '<svg>' },
         { id: 'bad id!', name: 'x' },
         { id: 'noname01' },
       ],
@@ -222,5 +222,14 @@ describe('backups', () => {
     expect(data.habits).toHaveLength(1);
     expect(data.habits[0]).toMatchObject({ name: 'Walk', target: 1, schedule: { type: 'days', days: [1] }, color: 'teal', icon: 'check' });
     expect(data.logs.ok123456).toEqual({ '2026-09-25': { value: 0, skipped: true, at: 5 } });
+  });
+
+  it('keeps a color or icon from a newer version, so it never syncs back as the default', () => {
+    const raw = { id: 'new12345', name: 'Surf', color: 'sunset', icon: 'surfboard', createdAt: 1, updatedAt: 1 };
+    expect(parseData({ version: 1, habits: [raw] }).habits[0]).toMatchObject({ color: 'sunset', icon: 'surfboard' });
+    // Anything that isn't a plain id is still cleaned.
+    for (const [color, icon] of [[42, null], ['Sunset', 'surf board'], ['a'.repeat(25), '1surf'], ['x"><script>', '']]) {
+      expect(parseData({ version: 1, habits: [{ ...raw, color, icon }] }).habits[0], String(color)).toMatchObject({ color: 'teal', icon: 'check' });
+    }
   });
 });

@@ -28,7 +28,7 @@ tested sync, service worker, palettes, animations, Claude Desktop extension and 
   color, and see the tile as it will look. The same screen edits a habit, archives it (off the board, history
   kept) or deletes it.
 - **Kinds of habits** – yes/no, a count, or minutes; every day, on chosen weekdays, or N times a week (judged per
-  week: a skipped day lowers that week's goal by one); a time of day; one of five colors and 67 icons, grouped
+  week: a skipped day lowers that week's goal by one); a time of day; one of twelve colors and 67 icons, grouped
   (health, movement, mind, food and drink, learning and work, creative, home and money, people). The icon is
   guessed from the name ("Walk the dog" gets a paw) and can be changed.
 - **Settings** – sync between devices (with the device list and Claude Desktop), appearance, weeks starting on
@@ -153,6 +153,12 @@ paste the new words into the extension's settings too (**Settings → Extensions
 conversation with Claude, like anything else you share there. The sync key is stored by Claude Desktop, marked as
 sensitive, and never shown to Claude. With a key that has no habits (a typo), it writes nothing at all, not even
 itself into a device list.
+
+**Updates:** the web app updates itself; the extension doesn't. When the app gains colors or icons, download the
+extension again (**Settings → Sync between devices → Use with Claude Desktop → Download**) and open it to replace
+the old one. Versions from now on keep a color or icon they don't know yet (showing it as teal or a check mark)
+instead of syncing it back as the default; extensions downloaded before 28 September 2026 don't, so replace one of
+those now.
 
 <details>
 <summary>Without the extension (other MCP apps, Claude Code, manual setup on Windows)</summary>
