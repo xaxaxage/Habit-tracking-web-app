@@ -10,7 +10,7 @@ import {
   getHabit,
   getLog,
   getSaveError,
-  moveHabit,
+  placeHabit,
   parseData,
   pauseHabit,
   reload,
@@ -27,7 +27,8 @@ import {
   updateSettings,
   type HabitInput,
 } from '../src/lib/store';
-import { boardHabits, isDone } from '../src/lib/habits';
+import { isDone } from '../src/lib/habits';
+import { boardOrder } from '../src/lib/order';
 import { sampleData } from '../e2e/fixtures';
 
 const water: HabitInput = {
@@ -72,17 +73,21 @@ describe('habits', () => {
     expect(getHabit(a.id)).toMatchObject({ target: 10, step: 1 });
     expect(getHabit(a.id)!.updatedAt).toBeGreaterThan(before);
 
-    moveHabit(c.id, -1);
-    expect(boardHabits(getData()).map((h) => h.name)).toEqual(['Water', 'Read', 'Stretch']);
+    const names = () => boardOrder(getData(), DAY).map((h) => h.name);
+    const stretchAt = getHabit(b.id)!.updatedAt;
+    placeHabit(c.id, a.id, undefined);
+    expect(names()).toEqual(['Water', 'Read', 'Stretch']);
+    expect(getHabit(c.id)!.placed).toMatchObject({ after: a.id });
     // Only the moved habit changed.
-    expect(getHabit(b.id)!.order).toBe(2);
-    moveHabit(c.id, -1);
-    expect(boardHabits(getData()).map((h) => h.name)).toEqual(['Read', 'Water', 'Stretch']);
+    expect(getHabit(b.id)!.updatedAt).toBe(stretchAt);
+    placeHabit(c.id, undefined, a.id);
+    expect(names()).toEqual(['Read', 'Water', 'Stretch']);
+    expect(getHabit(c.id)!.placed).toEqual({ before: a.id, at: expect.any(Number) });
 
     archiveHabit(b.id);
-    expect(boardHabits(getData()).map((h) => h.name)).toEqual(['Read', 'Water']);
+    expect(names()).toEqual(['Read', 'Water']);
     restoreHabit(b.id);
-    expect(boardHabits(getData()).map((h) => h.name)).toEqual(['Read', 'Water', 'Stretch']);
+    expect(names()).toEqual(['Read', 'Water', 'Stretch']);
 
     pauseHabit(a.id, '2026-09-20');
     expect(getHabit(a.id)!.pauses).toEqual([{ from: '2026-09-20' }]);

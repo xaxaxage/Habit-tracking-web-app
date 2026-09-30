@@ -35,6 +35,7 @@ import { addDays, daysBetween, isDateKey, monthKey, todayKey } from '../src/lib/
 import { autoColor, parseHabit } from '../src/lib/parse';
 import { guessIcon, HABIT_ICONS, isIconId } from '../src/lib/icons';
 import { buildParts } from '../src/lib/sync/parts';
+import { boardOrder } from '../src/lib/order';
 
 /**
  * What each tool does to the habits, apart from talking to the relays.
@@ -143,7 +144,7 @@ export function listHabits(input: { date?: string; include_archived?: boolean } 
   const today = todayKey();
   const date = checkDate(input.date);
   const data = getData();
-  const board = boardFor(data, date, today);
+  const board = boardFor(data, date, today, boardOrder(data, today));
   const habits = [...board.due, ...board.other].map((t) => {
     const h = t.habit;
     const w = isWeekly(h) ? weekProgress(h, data.logs[h.id], date, today, data.settings.weekStart) : undefined;
@@ -173,7 +174,7 @@ export function getProgress(input: { from?: string; to?: string; habit?: string 
   if (span < 0) throw new ToolError('"from" must not be after "to".');
   if (span > 365) throw new ToolError('Ask for at most 366 days at a time.');
   const data = getData();
-  const habits = input.habit ? [findHabit(input.habit, { archived: true })] : boardHabits(data);
+  const habits = input.habit ? [findHabit(input.habit, { archived: true })] : boardOrder(data, todayKey());
   const withDays = !!input.habit || span <= 31;
   let hit = 0;
   let due = 0;

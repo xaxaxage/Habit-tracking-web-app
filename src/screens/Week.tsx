@@ -1,6 +1,7 @@
 import type { Habit, Log } from '../lib/types';
 import type { DayState } from '../lib/habits';
-import { boardHabits, firstDay, fmt, isWeekly, WEEKDAY_LETTER, weekSummary } from '../lib/habits';
+import { boardOrder } from '../lib/order';
+import { firstDay, fmt, isWeekly, WEEKDAY_LETTER, weekSummary } from '../lib/habits';
 import { cycleDay, useData } from '../lib/store';
 import { addDays, daysBetween, rangeLabelLong, weekday, weekdayIndex, weekStartOf } from '../lib/dates';
 import { href, navigate } from '../lib/router';
@@ -34,9 +35,9 @@ export function Week({ start, today }: { start?: string; today: string }) {
   const ws = data.settings.weekStart;
   const current = weekStartOf(today, ws);
   const first = start && start <= today ? weekStartOf(start, ws) : current;
-  const week = weekSummary(data, first, today);
-  const last = weekSummary(data, addDays(first, -7), today);
-  const habits = boardHabits(data);
+  const habits = boardOrder(data, today);
+  const week = weekSummary(data, first, today, habits);
+  const last = weekSummary(data, addDays(first, -7), today, habits);
   const earliest = habits.reduce((min, h) => {
     const f = firstDay(h, data.logs[h.id]);
     return f < min ? f : min;

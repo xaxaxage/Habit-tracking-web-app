@@ -217,12 +217,12 @@ export interface WeekSummary {
   score: number | null;
 }
 
-export function weekSummary(data: AppData, first: string, today: string): WeekSummary {
+export function weekSummary(data: AppData, first: string, today: string, habits: Habit[] = boardHabits(data)): WeekSummary {
   const days = weekDays(first);
   const rows: WeekRow[] = [];
   let doneN = 0;
   let dueN = 0;
-  for (const h of boardHabits(data)) {
+  for (const h of habits) {
     const logs = data.logs[h.id];
     const start = firstDay(h, logs);
     if (start > days[6]) continue;
@@ -261,6 +261,7 @@ export interface Tile {
 }
 
 /** Habits that aren't archived, in board order. */
+/** The habits on the board (not archived), oldest first. The board shows them in boardOrder() (order.ts). */
 export function boardHabits(data: AppData): Habit[] {
   return data.habits.filter((h) => !h.archivedAt).sort((a, b) => a.order - b.order || (a.id < b.id ? -1 : 1));
 }
@@ -291,10 +292,11 @@ export interface Board {
   total: number;
 }
 
-export function boardFor(data: AppData, date: string, today: string): Board {
+/** The tiles for a day, split into due and not due, in the order of `habits` (default: oldest first). */
+export function boardFor(data: AppData, date: string, today: string, habits: Habit[] = boardHabits(data)): Board {
   const due: Tile[] = [];
   const other: Tile[] = [];
-  for (const h of boardHabits(data)) {
+  for (const h of habits) {
     const tile = tileFor(data, h, date, today);
     const first = firstDay(h, data.logs[h.id]);
     (isDueOn(h, date, first) ? due : other).push(tile);

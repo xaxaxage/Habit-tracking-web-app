@@ -24,6 +24,18 @@ export type Schedule =
   | { type: 'days'; days: number[] }
   | { type: 'weekly'; times: number };
 
+/**
+ * Where you last moved a habit on the board: right after one habit, or right
+ * before one (when it went to the top). It holds until you've done the habits
+ * in a different order on a few days (see order.ts).
+ */
+export interface Placement {
+  after?: string;
+  before?: string;
+  /** When it was moved. */
+  at: number;
+}
+
 /** A stretch of days, both ends included, when a habit was paused. No end: still paused. */
 export interface Pause {
   from: string;
@@ -44,8 +56,10 @@ export interface Habit {
   time: TimeOfDay;
   color: HabitColor;
   icon: string;
-  /** Position on the board, smallest first. */
+  /** Position among habits the app knows nothing about yet (new ones go last). */
   order: number;
+  /** Where you moved it on the board, if you did. */
+  placed?: Placement;
   /** First day the habit counts (YYYY-MM-DD). */
   start: string;
   pauses: Pause[];

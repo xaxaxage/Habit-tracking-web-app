@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import type { AppData, Habit, HabitColor, HabitKind, Log, Pause, Schedule, Settings, SyncMeta, TimeOfDay } from './types';
+import type { AppData, Habit, HabitColor, HabitKind, Log, Pause, Placement, Schedule, Settings, SyncMeta, TimeOfDay } from './types';
 import { BOARD_LAYOUTS, HABIT_COLORS, HABIT_KINDS, TIMES_OF_DAY } from './types';
 import { addDays, isDateKey, todayKey } from './dates';
 import { isIconId } from './icons';
@@ -52,6 +52,14 @@ export function cleanSchedule(raw: any): Schedule {
   return { type: 'daily' };
 }
 
+function cleanPlacement(raw: any): Placement | undefined {
+  const at = time(raw?.at);
+  const after = isHabitId(raw?.after) ? raw.after : undefined;
+  const before = isHabitId(raw?.before) ? raw.before : undefined;
+  if (!at || (!after && !before)) return undefined;
+  return { ...(after ? { after } : {}), ...(before ? { before } : {}), at };
+}
+
 function cleanPauses(raw: unknown): Pause[] {
   if (!Array.isArray(raw)) return [];
   return raw
@@ -96,6 +104,8 @@ export function cleanHabit(raw: any): Habit | undefined {
     updatedAt: time(raw.updatedAt) || createdAt,
   };
   if (time(raw.archivedAt)) habit.archivedAt = time(raw.archivedAt);
+  const placed = cleanPlacement(raw.placed);
+  if (placed) habit.placed = placed;
   return habit;
 }
 
@@ -318,17 +328,13 @@ export function resumeHabit(id: string, today = todayKey()) {
   }));
 }
 
-/** Move a habit one place up (-1) or down (+1) on the board. */
-export function moveHabit(id: string, direction: -1 | 1) {
-  const active = data.habits.filter((h) => !h.archivedAt).sort((a, b) => a.order - b.order);
-  const i = active.findIndex((h) => h.id === id);
-  const j = i + direction;
-  if (i < 0 || j < 0 || j >= active.length) return;
-  // Only the moved habit changes: it goes between its new neighbours.
-  const after = active[j];
-  const beyond = active[j + direction];
-  const order = beyond ? (after.order + beyond.order) / 2 : after.order + direction;
-  replaceHabit(id, (h) => ({ ...h, order }));
+/**
+ * Move a habit on the board: right after `after`, or right before `before`
+ * when it goes first. The board keeps it there (see order.ts).
+ */
+export function placeHabit(id: string, after: string | undefined, before: string | undefined) {
+  if (!after && !before) return;
+  replaceHabit(id, (h) => ({ ...h, placed: { ...(after ? { after } : {}), ...(before ? { before } : {}), at: Date.now() } }));
 }
 
 /** Delete a habit and its check-ins (on every synced device, too). */

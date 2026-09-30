@@ -29,7 +29,7 @@ interface Board {
 }
 
 const BOARDS: Board[] = [
-  { title: 'Today board', hash: '#/', max: 0.02, why: 'Settings button in the bottom bar; Wednesday is 4/5 (the mockup data disagrees with itself)' },
+  { title: 'Today board', hash: '#/', max: 0.02, why: 'Settings button in the bottom bar; Wednesday is 4/5 (the mockup data disagrees with itself); the hint also says how to move a tile' },
   {
     title: 'Hold a tile',
     hash: '#/',

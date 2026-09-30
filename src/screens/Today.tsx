@@ -1,12 +1,13 @@
 import { useState } from 'preact/hooks';
 import type { Tile } from '../lib/habits';
-import { boardFor, boardHabits, currentPause, firstDay, isPaused, repeatLabel } from '../lib/habits';
-import { restoreLog, tapHabit, useData } from '../lib/store';
+import { boardFor, currentPause, firstDay, isPaused, repeatLabel } from '../lib/habits';
+import { boardOrder } from '../lib/order';
+import { placeHabit, restoreLog, tapHabit, useData } from '../lib/store';
 import { addDays, dayMonthLong, fromKey, longDate, shortWeekday, weekday } from '../lib/dates';
 import { href, navigate } from '../lib/router';
 import { showToast } from '../lib/toast';
 import { HabitSheet } from '../components/HabitSheet';
-import { TileView } from '../components/Tile';
+import { Board, type Move } from '../components/Board';
 import { BRIGHT_COLORS } from '../lib/theme';
 
 export const EXAMPLES = ['Drink 8 glasses of water', 'Workout 3 times a week', 'Meditate 10 min every morning', 'No coffee after 14:00'];
@@ -49,9 +50,10 @@ function notDueMeta(t: Tile, date: string, first: string): string | undefined {
 export function Today({ date, today }: { date: string; today: string }) {
   const data = useData();
   const [open, setOpen] = useState<string | null>(null);
-  const board = boardFor(data, date, today);
+  const [said, say] = useState('');
+  const habits = boardOrder(data, today);
+  const board = boardFor(data, date, today, habits);
   const layout = data.settings.layout;
-  const habits = boardHabits(data);
   const isToday = date === today;
   const openHabit = open ? data.habits.find((h) => h.id === open) : undefined;
 
@@ -64,6 +66,12 @@ export function Today({ date, today }: { date: string; today: string }) {
     if (h.kind !== 'check' && t.status === 'done') {
       showToast(`${h.name} reset to 0`, { label: 'Undo', run: () => restoreLog(h, date, before) });
     }
+  };
+
+  const move = (tiles: Tile[]) => (m: Move) => {
+    const h = tiles.find((t) => t.habit.id === m.id)!.habit;
+    placeHabit(m.id, m.after, m.before);
+    say(`${h.name} moved to ${m.index + 1} of ${tiles.length}`);
   };
 
   const days = Array.from({ length: STRIP }, (_, i) => addDays(today, i - STRIP + 1));
@@ -126,39 +134,42 @@ export function Today({ date, today }: { date: string; today: string }) {
       ) : (
         <>
           {board.due.length > 0 ? (
-            <div class={`tiles ${layout}`}>
-              {board.due.map((t) => (
-                <TileView key={t.habit.id} tile={t} layout={layout} onTap={() => tap(t)} onOptions={() => setOpen(t.habit.id)} />
-              ))}
-            </div>
+            <Board
+              tiles={board.due}
+              layout={layout}
+              label={`Due ${isToday ? 'today' : 'this day'}`}
+              onTap={tap}
+              onOptions={setOpen}
+              onMove={move(board.due)}
+            />
           ) : (
             <p class="notice">Nothing is due {isToday ? 'today' : 'on this day'}. Enjoy the rest day.</p>
           )}
           <p id="board-hint" class="board-hint">
             <span class="touch-only">
-              Tap to log · <u>hold a tile</u> to skip, add a note or open it
+              Tap to log · <u>hold a tile</u> to skip, add a note or open it · hold and drag to move it
             </span>
             <span class="mouse-only">
-              Click to log · <u>right-click a tile</u> to skip, add a note or open it
+              Click to log · <u>right-click a tile</u> to skip, add a note or open it · hold and drag to move it
             </span>
-            <span class="sr-only"> (with a keyboard: Shift+Enter)</span>
+            <span class="sr-only"> (with a keyboard: Shift+Enter for options, Alt+Up or Alt+Down to move)</span>
+          </p>
+          <p class="sr-only" aria-live="polite">
+            {said}
           </p>
           {board.other.length > 0 && (
             <>
               <h2 class="section-label other-label">Not due {isToday ? 'today' : 'this day'}</h2>
-              <div class={`tiles ${layout}`}>
-                {board.other.map((t) => (
-                  <TileView
-                    layout={layout}
-                    key={t.habit.id}
-                    tile={t}
-                    quiet
-                    meta={notDueMeta(t, date, firstDay(t.habit, data.logs[t.habit.id]))}
-                    onTap={() => tap(t)}
-                    onOptions={() => setOpen(t.habit.id)}
-                  />
-                ))}
-              </div>
+              <Board
+                tiles={board.other}
+                layout={layout}
+                label={`Not due ${isToday ? 'today' : 'this day'}`}
+                quiet
+                meta={(t) => notDueMeta(t, date, firstDay(t.habit, data.logs[t.habit.id]))}
+                onTap={tap}
+                onOptions={setOpen}
+                onMove={move(board.other)}
+              />
             </>
           )}
         </>

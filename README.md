@@ -17,6 +17,10 @@ tested sync, service worker, palettes, animations, Claude Desktop extension and 
   go, shows your streak, and gets a check when it's done. The number top right is how many are still to do, and
   the strip below it shows the last five days: tap one to log an earlier day. Habits that aren't due today
   (weekend-only, paused) are listed below the board.
+- **Order that learns** – the board shows your habits in the order you usually get them done: the app looks at
+  when you finished each one over the last eight weeks (recent weeks count more, days filled in afterwards don't).
+  New habits go by their time of day. **Hold a tile and drag it** to put it somewhere else (with a keyboard:
+  Alt+Up / Alt+Down); it stays there until you've done it in a different order on 7 days.
 - **Hold a tile** (or right-click, or Shift+Enter with a keyboard) – mark done or skip the day (the streak stays),
   set an exact amount, add a note, go to its week or its history, or **Edit** it. Swipe the sheet down (or tap outside)
   to close it.
@@ -33,7 +37,7 @@ tested sync, service worker, palettes, animations, Claude Desktop extension and 
   (health, movement, mind, food and drink, learning and work, creative, home and money, people). The icon is
   guessed from the name ("Walk the dog" gets a paw) and can be changed.
 - **Settings** – sync between devices (with the device list and Claude Desktop), appearance, weeks starting on
-  Monday or Sunday, the order on the board, archived habits, backups, delete everything, and the app's version.
+  Monday or Sunday, archived habits, backups, delete everything, and the app's version.
 - **Appearance** – eight palettes: Night (the design), Harbor, Matcha, Ocean, Lavender, Graphite, and the dark
   Espresso and OLED black, plus Auto (Harbor by day, Night in dark mode). Text colors are adjusted until they are
   readable in every palette.

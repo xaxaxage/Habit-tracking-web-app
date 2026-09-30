@@ -72,6 +72,10 @@
 .tiles > .tile:nth-child(n + 5) {
   animation-delay: 0.16s;
 }
+/* Once they're in, moving tiles around doesn't replay it. */
+.tiles.settled > .tile {
+  animation: none;
+}
 
 /* A tap fills the tile up; when it's full the check pops in. */
 .tile .fill {

@@ -216,9 +216,18 @@
   font-variant-numeric: tabular-nums;
 }
 .tiles {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+/* Held long enough to move: it lifts; dragged, it follows the finger above the others. */
+.tile.lifted {
+  box-shadow: var(--shadow);
+}
+.tile.dragging {
+  z-index: 5;
+  cursor: grabbing;
 }
 .tile {
   position: relative;

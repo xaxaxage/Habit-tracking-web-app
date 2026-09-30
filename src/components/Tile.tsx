@@ -2,7 +2,6 @@ import type { Tile } from '../lib/habits';
 import type { BoardLayout } from '../lib/types';
 import { fmt, isWeekly, minutesLabel, TIME_LABEL } from '../lib/habits';
 import { Check, Flame, HabitGlyph } from './Icons';
-import { useLongPress } from './Common';
 
 /** The small line under a habit's name on its tile. */
 export function tileMeta(t: Tile, short = false): string {
@@ -35,22 +34,20 @@ export function tileLabel(t: Tile): string {
   return text;
 }
 
+/** A habit's tile. Holding, dragging, right-clicking and the keyboard are handled by the Board around it. */
 export function TileView({
   tile,
   meta,
   onTap,
-  onOptions,
   quiet,
   layout = 'tiles',
 }: {
   tile: Tile;
   meta?: string;
   onTap: () => void;
-  onOptions: () => void;
   quiet?: boolean;
   layout?: BoardLayout;
 }) {
-  const press = useLongPress(onOptions);
   const full = tile.status === 'done';
   const fill = full ? 1 : tile.status === 'skipped' ? 0 : tile.progress;
   const cls = ['tile', `c-${tile.habit.color}`, full && 'full', fill >= 0.7 && 'high', tile.status === 'skipped' && 'skipped', quiet && 'quiet']
@@ -62,9 +59,9 @@ export function TileView({
       class={cls}
       aria-label={tileLabel(tile)}
       aria-describedby="board-hint"
-      aria-keyshortcuts="Shift+Enter"
+      aria-keyshortcuts="Shift+Enter Alt+ArrowUp Alt+ArrowDown"
+      data-id={tile.habit.id}
       onClick={onTap}
-      {...press}
     >
       {/* In a list the fill grows from the left; on tiles, from the bottom. */}
       <span class="fill" aria-hidden="true" style={{ [layout === 'list' ? 'width' : 'height']: `${Math.round(fill * 100)}%` }} />

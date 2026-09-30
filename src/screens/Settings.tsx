@@ -3,18 +3,15 @@ import {
   backupJson,
   clearAll,
   deleteHabit,
-  moveHabit,
   parseData,
   restoreBackup,
   restoreHabit,
   updateSettings,
   useData,
 } from '../lib/store';
-import { boardHabits } from '../lib/habits';
 import { todayKey } from '../lib/dates';
 import { saveFile } from '../lib/files';
 import { showToast } from '../lib/toast';
-import { ChevronDown, ChevronUp } from '../components/Icons';
 import { loadSyncConfig } from '../lib/sync/state';
 import { SyncSettings } from './SyncSettings';
 import { AppearanceSettings } from './AppearanceSettings';
@@ -52,7 +49,6 @@ async function importBackup(file: File) {
 
 function HabitSettings() {
   const data = useData();
-  const active = boardHabits(data);
   const archived = data.habits.filter((h) => h.archivedAt).sort((a, b) => b.archivedAt! - a.archivedAt!);
   return (
     <Card title="Habits" id="habits-title">
@@ -70,32 +66,6 @@ function HabitSettings() {
         </div>
       </div>
 
-      {active.length > 1 && (
-        <details class="fold">
-          <summary>Order on the board</summary>
-          <ul class="list plain-list" aria-label="Order on the board">
-            {active.map((h, i) => (
-              <li class="settings-row" key={h.id}>
-                <span class="row-main">
-                  <span class="row-title">{h.name}</span>
-                </span>
-                <button type="button" class="round-btn" aria-label={`Move ${h.name} up`} disabled={i === 0} onClick={() => moveHabit(h.id, -1)}>
-                  <ChevronUp size={18} />
-                </button>
-                <button
-                  type="button"
-                  class="round-btn"
-                  aria-label={`Move ${h.name} down`}
-                  disabled={i === active.length - 1}
-                  onClick={() => moveHabit(h.id, 1)}
-                >
-                  <ChevronDown size={18} />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </details>
-      )}
 
       <div class="field">
         <span class="field-label">Archived ({archived.length})</span>

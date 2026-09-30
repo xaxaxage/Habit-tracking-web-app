@@ -157,6 +157,11 @@ describe('merging two devices', () => {
     expect(habits).toMatchObject({ habits: [{ id: 'ok1234', kind: 'check' }], deleted: [{ id: 'gone12', at: 5 }] });
   });
 
+  it('passes on where a habit was moved on the board', () => {
+    const moved = withData([habit('aaaa0001'), habit('bbbb0002', { placed: { before: 'aaaa0001', at: 500 }, updatedAt: 500 })]);
+    expect(syncInto(withData([habit('aaaa0001'), habit('bbbb0002')]), moved).habits[1].placed).toEqual({ before: 'aaaa0001', at: 500 });
+  });
+
   it('passes on a color or icon only a newer version knows, unchanged', () => {
     const newer = withData([habit('surf0001', { name: 'Surf', color: 'sunset' as Habit['color'], icon: 'surfboard' })]);
     const here = syncInto(withData([]), newer);
