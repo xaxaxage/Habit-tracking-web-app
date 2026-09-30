@@ -100,18 +100,18 @@ describe('the built extension', () => {
 
   it('reads and writes the habits through the relays, and only MCP goes to stdout', async () => {
     const { client, stderr, errors } = await start({ SYNC_KEY: phrase, RELAYS: `${relay.url()} ${silentTcp.url} ${silentWs.url()}` });
-    const list = await call(client, 'list_habits', { date: '2026-09-25' });
+    const list = await call(client, 'get_today', { date: '2026-09-25' });
     expect(list.isError).toBe(false);
     expect(list.json.habits.map((h: { name: string }) => h.name)).toEqual(['Water', 'Stretch', 'Workout', 'Read', 'Journal', 'Screens off 23:00']);
-    expect(list.json.habits[0]).toMatchObject({ status: 'partly done', amount: '5 glasses' });
+    expect(list.json.habits[0]).toMatchObject({ status: 'pending', progress: '5 of 8 glasses' });
 
     const started = Date.now();
-    const done = await call(client, 'check_in', { habit: 'journal', date: '2026-09-25', note: 'Wrote about the trip' });
+    const done = await call(client, 'check_habit', { habit: 'journal', date: '2026-09-25', note: 'Wrote about the trip' });
     expect(done.isError).toBe(false);
-    expect(done.json).toMatchObject({ habit: 'Journal', status: 'done', note: 'Wrote about the trip' });
+    expect(done.json).toMatchObject({ name: 'Journal', status: 'done', note: 'Wrote about the trip' });
     // Relays that never answer don't hold a request up.
     expect(Date.now() - started).toBeLessThan(5000);
-    const created = await call(client, 'create_habit', { description: 'Stretch 10 min every morning', name: 'Morning stretch' });
+    const created = await call(client, 'add_habit', { description: 'Stretch 10 min every morning', name: 'Morning stretch' });
     expect(created.json.created).toMatchObject({ name: 'Morning stretch', type: 'timer', goal: '10 min' });
 
     // The phone sees both.
@@ -138,9 +138,10 @@ describe('the built extension', () => {
     const { client } = await start({ SYNC_KEY: phrase, RELAYS: relay.url() });
     const replies = [
       await call(client, 'list_habits', { include_archived: true }),
-      await call(client, 'get_progress', { from: '2026-09-01', to: '2026-09-25' }),
-      await call(client, 'check_in', { habit: 'nothing like this' }),
-      await call(client, 'edit_habit', { habit: 'Water', name: 'Water' }),
+      await call(client, 'get_today', {}),
+      await call(client, 'get_summary', { from: '2026-09-01', to: '2026-09-25' }),
+      await call(client, 'check_habit', { habit: 'nothing like this' }),
+      await call(client, 'update_habit', { habit: 'Water', name: 'Water' }),
     ];
     const all = replies.map((r) => r.text).join(' ').toLowerCase();
     const words = phrase.split(' ');
@@ -154,13 +155,13 @@ describe('the built extension', () => {
     await call(client, 'list_habits');
     relay.refuse(true);
     try {
-      const r = await call(client, 'skip_habit', { habit: 'Water', date: '2026-09-24' });
+      const r = await call(client, 'check_habit', { habit: 'Water', date: '2026-09-24', status: 'skipped' });
       expect(r.isError).toBe(true);
       expect(r.text).toMatch(/nothing was saved/);
     } finally {
       relay.refuse(false);
     }
-    const after = await call(client, 'list_habits', { date: '2026-09-24' });
+    const after = await call(client, 'get_today', { date: '2026-09-24' });
     expect(after.json.habits.find((h: { name: string }) => h.name === 'Water')).toMatchObject({ status: 'done' });
   }, 30_000);
 
@@ -168,7 +169,7 @@ describe('the built extension', () => {
     const none = await start({ RELAYS: relay.url() });
     expect((await call(none.client, 'list_habits')).text).toMatch(/sync key is not set/);
     const typo = await start({ SYNC_KEY: 'apple banana cherry', RELAYS: relay.url() });
-    const t = await call(typo.client, 'check_in', { habit: 'Water' });
+    const t = await call(typo.client, 'check_habit', { habit: 'Water' });
     expect(t.isError).toBe(true);
     expect(t.text).toMatch(/not a valid 12-word key/);
     expect(t.text).not.toContain('apple banana cherry');
@@ -176,13 +177,13 @@ describe('the built extension', () => {
     const before = relay.events.size;
     const unused = await start({ SYNC_KEY: newPhrase(), RELAYS: relay.url() });
     expect((await call(unused.client, 'list_habits')).text).toMatch(/No synced habits were found/);
-    const w = await call(unused.client, 'create_habit', { name: 'Floss' });
+    const w = await call(unused.client, 'add_habit', { name: 'Floss' });
     expect(w.isError).toBe(true);
     expect(w.text).toMatch(/Nothing was changed/);
     // Nothing was written under the unused key, not even this computer in a device list.
     expect(relay.events.size).toBe(before);
     // Still answering.
-    expect((await unused.client.listTools()).tools.length).toBe(8);
+    expect((await unused.client.listTools()).tools.length).toBe(7);
   }, 60_000);
 
   it('says when the relays cannot be reached, without crashing', async () => {
@@ -190,8 +191,8 @@ describe('the built extension', () => {
     const r = await call(client, 'list_habits');
     expect(r.isError).toBe(true);
     expect(r.text).toMatch(/Couldn't reach any of the sync relays/);
-    const w = await call(client, 'check_in', { habit: 'Water' });
+    const w = await call(client, 'check_habit', { habit: 'Water' });
     expect(w.text).toMatch(/Nothing was changed/);
-    expect((await client.listTools()).tools.length).toBe(8);
+    expect((await client.listTools()).tools.length).toBe(7);
   }, 60_000);
 });

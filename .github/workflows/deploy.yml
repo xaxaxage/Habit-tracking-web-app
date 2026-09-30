@@ -25,6 +25,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - run: npm run build:cloud
       - name: Check the Claude Desktop extension with the official mcpb tool
         run: |
           mkdir -p "$RUNNER_TEMP/mcpb/ext"

@@ -21,15 +21,17 @@ import {
   currentPause,
   dayState,
   firstDay,
+  fmt,
   goalLabel,
   isDueOn,
   isWeekly,
   repeatLabel,
   statsOf,
   streakOf,
+  tileFor,
   TIME_LABEL,
-  weekProgress,
   type DayState,
+  type Tile,
 } from '../src/lib/habits';
 import { addDays, daysBetween, isDateKey, monthKey, todayKey } from '../src/lib/dates';
 import { autoColor, parseHabit } from '../src/lib/parse';
@@ -150,38 +152,78 @@ function checkGroup(name: string): string {
 
 // ── Reading ───────────────────────────────────────────────────────────────
 
-export function listHabits(input: { date?: string; include_archived?: boolean; group?: string } = {}) {
+/** "5 of 8 glasses", "10 min of 20 min". */
+function progressLabel(h: Habit, value: number): string {
+  return h.kind === 'timer' ? `${amountLabel(h, value)} of ${amountLabel(h, h.target)}` : `${fmt(value)} of ${amountLabel(h, h.target)}`;
+}
+
+/** How a habit stands on a day, for get_today: done, skipped or pending, and how far along. */
+function todayOut(t: Tile, date: string, today: string) {
+  const h = t.habit;
+  const log = t.log;
+  const logs = getData().logs[h.id];
+  const value = log && !log.skipped ? log.value : 0;
+  const w = t.week;
+  return {
+    id: h.id,
+    name: h.name,
+    status: t.status === 'done' ? 'done' : t.status === 'skipped' ? 'skipped' : 'pending',
+    ...(h.kind !== 'check' ? { amount: value, goal: h.target, unit: h.unit, progress: progressLabel(h, value) } : {}),
+    ...(w && isWeekly(h) ? { this_week: `${w.done} of ${h.schedule.times}`, ...(t.status === 'met' ? { week_goal_met: true } : {}) } : {}),
+    streak: streakOut(h, today),
+    time_of_day: TIME_LABEL[h.time],
+    ...(h.group ? { group: h.group } : {}),
+    ...(log?.note ? { note: log.note } : {}),
+    ...(date !== today && dayState(h, logs, date, today) === 'future' ? { upcoming: true } : {}),
+  };
+}
+
+/** Why a habit isn't due on a day. */
+function notDueReason(h: Habit, date: string): string {
+  const first = firstDay(h, getData().logs[h.id]);
+  if (currentPause(h) || h.pauses.some((p) => date >= p.from && (!p.to || date <= p.to))) return 'paused';
+  if (date < first) return 'not started yet';
+  return `not scheduled (${repeatLabel(h.schedule).toLowerCase()})`;
+}
+
+export function getToday(input: { date?: string; group?: string } = {}) {
   const today = todayKey();
   const date = checkDate(input.date);
   const data = getData();
   const group = input.group ? checkGroup(input.group) : undefined;
   const board = boardFor(data, date, today, boardOrder(data, today).filter((h) => !group || sameGroup(h.group, group)));
+  const skipped = board.due.filter((t) => t.status === 'skipped').length;
   const groups = groupsOf(boardHabits(data));
-  const habits = [...board.due, ...board.other].map((t) => {
-    const h = t.habit;
-    const w = isWeekly(h) ? weekProgress(h, data.logs[h.id], date, today, data.settings.weekStart) : undefined;
-    return {
-      ...habitOut(h),
-      due: board.due.includes(t),
-      ...dayOut(h, date, today),
-      streak: streakOut(h, today),
-      ...(w ? { this_week: `${w.done} of ${h.schedule.type === 'weekly' ? h.schedule.times : 7}` } : {}),
-    };
-  });
-  const archived = input.include_archived ? data.habits.filter((h) => h.archivedAt && (!group || sameGroup(h.group, group))).map(habitOut) : undefined;
   return {
     date,
     today,
     ...(group ? { group } : {}),
-    summary: { done: board.done, still_to_do: board.left, due: board.total },
-    order: 'The order the user usually does them in (as on the board in the app).',
-    habits,
+    summary: { done: board.done, pending: board.left, skipped, due: board.total },
+    order: 'In the order the user usually gets them done (as on the board in the app).',
+    habits: board.due.map((t) => todayOut(t, date, today)),
+    ...(board.other.length ? { not_due: board.other.map((t) => ({ id: t.habit.id, name: t.habit.name, why: notDueReason(t.habit, date) })) } : {}),
     ...(groups.length && !group ? { groups } : {}),
-    ...(archived ? { archived } : {}),
   };
 }
 
-export function getProgress(input: { from?: string; to?: string; habit?: string; group?: string } = {}) {
+export function listHabits(input: { include_archived?: boolean; group?: string } = {}) {
+  const today = todayKey();
+  const data = getData();
+  const group = input.group ? checkGroup(input.group) : undefined;
+  const inGroup = (h: Habit) => !group || sameGroup(h.group, group);
+  const groups = groupsOf(boardHabits(data));
+  return {
+    today,
+    ...(group ? { group } : {}),
+    habits: boardOrder(data, today)
+      .filter(inGroup)
+      .map((h) => ({ ...habitOut(h), streak: streakOut(h, today) })),
+    ...(groups.length && !group ? { groups } : {}),
+    ...(input.include_archived ? { archived: data.habits.filter((h) => h.archivedAt && inGroup(h)).map(habitOut) } : {}),
+  };
+}
+
+export function getSummary(input: { from?: string; to?: string; habit?: string; group?: string } = {}) {
   const today = todayKey();
   const to = checkDate(input.to);
   const from = input.from ? checkDate(input.from) : addDays(to, -6);
@@ -192,26 +234,34 @@ export function getProgress(input: { from?: string; to?: string; habit?: string;
   const group = input.group ? checkGroup(input.group) : undefined;
   const habits = input.habit
     ? [findHabit(input.habit, { archived: true })]
-    : boardOrder(data, todayKey()).filter((h) => !group || sameGroup(h.group, group));
+    : boardOrder(data, today).filter((h) => !group || sameGroup(h.group, group));
   const withDays = !!input.habit || span <= 31;
   let hit = 0;
   let due = 0;
   const byGroup = new Map<string, { hit: number; due: number }>();
+  // Per day: habits done out of those that counted (weekly ones on the days they were done; today only what's done so far).
+  const perDay = new Map<string, { done: number; due: number }>();
+  for (let d = from; d <= to; d = addDays(d, 1)) perDay.set(d, { done: 0, due: 0 });
   const out = habits.map((h) => {
-    const s = statsOf(h, data.logs[h.id], from, to, today, data.settings.weekStart);
+    const logs = data.logs[h.id];
+    const s = statsOf(h, logs, from, to, today, data.settings.weekStart);
     hit += s.hit;
     due += s.due;
     if (h.group) {
       const g = byGroup.get(h.group) ?? { hit: 0, due: 0 };
       byGroup.set(h.group, { hit: g.hit + s.hit, due: g.due + s.due });
     }
+    const first = firstDay(h, logs);
     const days: { date: string; status: string; amount?: string; note?: string }[] = [];
-    if (withDays) {
-      const first = firstDay(h, data.logs[h.id]);
-      for (let d = from; d <= to; d = addDays(d, 1)) {
-        if (d < first) continue;
-        days.push({ date: d, ...dayOut(h, d, today) });
-      }
+    for (let d = from; d <= to; d = addDays(d, 1)) {
+      if (d < first) continue;
+      const state = dayState(h, logs, d, today, first);
+      const tally = perDay.get(d)!;
+      if (state === 'done') {
+        tally.done++;
+        tally.due++;
+      } else if ((state === 'partial' || state === 'open') && d < today && !isWeekly(h)) tally.due++;
+      if (withDays) days.push({ date: d, ...dayOut(h, d, today) });
     }
     return {
       id: h.id,
@@ -219,7 +269,7 @@ export function getProgress(input: { from?: string; to?: string; habit?: string;
       ...(h.group ? { group: h.group } : {}),
       repeat: repeatLabel(h.schedule),
       [isWeekly(h) ? 'weeks_met' : 'days_done']: `${s.hit} of ${s.due}`,
-      hit_rate: s.rate === null ? null : `${s.rate}%`,
+      completion: s.rate === null ? null : `${s.rate}%`,
       ...(h.kind !== 'check' && !isWeekly(h) ? { average_per_day: amountLabel(h, Math.round(s.average * 10) / 10) } : {}),
       streak: streakOut(h, today),
       ...(withDays ? { days } : {}),
@@ -231,57 +281,56 @@ export function getProgress(input: { from?: string; to?: string; habit?: string;
     to,
     today,
     ...(group ? { group } : {}),
-    overall_hit_rate: rate({ hit, due }),
+    completion: rate({ hit, due }),
     ...(byGroup.size > 1 && !group && !input.habit
-      ? { by_group: groupsOf(habits).map((g) => ({ group: g, hit_rate: rate(byGroup.get(g) ?? { hit: 0, due: 0 }) })) }
+      ? { by_group: groupsOf(habits).map((g) => ({ group: g, completion: rate(byGroup.get(g) ?? { hit: 0, due: 0 }) })) }
       : {}),
-    note: 'Skipped days, days a habit is paused or not scheduled, and today until it is done do not count against the hit rate.',
+    ...(withDays && !input.habit ? { per_day: [...perDay].map(([date, t]) => ({ date, done: t.done, of: t.due })) } : {}),
+    note: 'Skipped days, days a habit is paused or not scheduled, and today until it is done do not count against completion. "Times a week" habits count per week.',
     habits: out,
   };
 }
 
-// ── Checking in ───────────────────────────────────────────────────────────
+// ── Checking off ──────────────────────────────────────────────────────────
 
-function checkInResult(h: Habit, date: string) {
+/** The habit as it is now, after a change. */
+const getHabitNow = (h: Habit) => getData().habits.find((x) => x.id === h.id) ?? h;
+
+function checkResult(h: Habit, date: string) {
   const today = todayKey();
-  const board = boardFor(getData(), date, today);
+  const data = getData();
+  const board = boardFor(data, date, today);
   return {
-    habit: h.name,
-    id: h.id,
+    ...todayOut(tileFor(data, getHabitNow(h), date, today), date, today),
     date,
-    ...dayOut(h, date, today),
-    streak: streakOut(h, today),
-    day: { done: board.done, still_to_do: board.left, due: board.total },
+    day: { done: board.done, pending: board.left, due: board.total },
   };
 }
 
-export function checkIn(input: { habit: string; date?: string; amount?: number; add?: boolean; note?: string }) {
+/** Mark a habit done (a count or timer: an amount of it), skipped or not done on a day. */
+export function checkHabit(input: { habit: string; date?: string; status?: 'done' | 'skipped' | 'not_done'; amount?: number; add?: boolean; note?: string }) {
   const h = findHabit(input.habit);
   const date = checkDate(input.date);
-  if (input.amount !== undefined && (!Number.isFinite(input.amount) || input.amount < 0)) throw new ToolError('The amount must be 0 or more.');
-  if (h.kind === 'check' && input.amount !== undefined && input.amount !== 1 && input.amount !== 0) {
-    throw new ToolError(`"${h.name}" is a yes/no habit: leave the amount out to mark it done.`);
+  const status = input.status ?? 'done';
+  const note = input.note !== undefined ? { note: input.note.slice(0, MAX_NOTE) } : {};
+  if (input.amount !== undefined) {
+    if (status !== 'done') throw new ToolError('Give an amount only with status "done".');
+    if (!Number.isFinite(input.amount) || input.amount < 0) throw new ToolError('The amount must be 0 or more.');
+    if (h.kind === 'check' && input.amount !== 1 && input.amount !== 0) {
+      throw new ToolError(`"${h.name}" is a yes/no habit: leave the amount out to mark it done.`);
+    }
   }
-  const prev = getLog(h.id, date);
-  const before = prev && !prev.skipped ? prev.value : 0;
-  let value = h.target;
-  if (h.kind !== 'check' && input.amount !== undefined) value = input.add ? before + input.amount : input.amount;
-  setLog(h.id, date, { value: Math.min(1_000_000, Math.round(value * 10) / 10), skipped: false, ...(input.note !== undefined ? { note: input.note.slice(0, MAX_NOTE) } : {}) });
-  return { result: checkInResult(h, date), touched: monthParts(date) } satisfies WriteResult<unknown>;
-}
-
-export function undoCheckIn(input: { habit: string; date?: string }) {
-  const h = findHabit(input.habit, { archived: true });
-  const date = checkDate(input.date);
-  setLog(h.id, date, { value: 0, skipped: false });
-  return { result: checkInResult(h, date), touched: monthParts(date) } satisfies WriteResult<unknown>;
-}
-
-export function skipHabit(input: { habit: string; date?: string; note?: string }) {
-  const h = findHabit(input.habit);
-  const date = checkDate(input.date);
-  setLog(h.id, date, { value: 0, skipped: true, ...(input.note !== undefined ? { note: input.note.slice(0, MAX_NOTE) } : {}) });
-  return { result: checkInResult(h, date), touched: monthParts(date) } satisfies WriteResult<unknown>;
+  if (status === 'skipped') setLog(h.id, date, { value: 0, skipped: true, ...note });
+  else if (status === 'not_done') setLog(h.id, date, { value: 0, skipped: false, ...note });
+  else {
+    const prev = getLog(h.id, date);
+    const before = prev && !prev.skipped ? prev.value : 0;
+    let value = h.target;
+    if (h.kind !== 'check' && input.amount !== undefined) value = input.add ? before + input.amount : input.amount;
+    if (h.kind === 'check' && input.amount === 0) value = 0;
+    setLog(h.id, date, { value: Math.min(1_000_000, Math.round(value * 10) / 10), skipped: false, ...note });
+  }
+  return { result: checkResult(h, date), touched: monthParts(date) } satisfies WriteResult<unknown>;
 }
 
 // ── Creating and changing habits ──────────────────────────────────────────
@@ -368,7 +417,7 @@ function applyFields(base: HabitInput, f: HabitFields): HabitInput {
   return out;
 }
 
-export function createHabitTool(input: HabitFields & { description?: string }) {
+export function addHabit(input: HabitFields & { description?: string }) {
   const text = (input.description ?? '').trim();
   if (!text && !input.name?.trim()) throw new ToolError('Give a name, or a description like "Read 20 min every evening".');
   const parsed = parseHabit(text || input.name!);
@@ -392,7 +441,7 @@ export function createHabitTool(input: HabitFields & { description?: string }) {
   return { result: { created: habitOut(h), due_today: isDueOn(h, todayKey(), h.start) }, touched: ['habits'] } satisfies WriteResult<unknown>;
 }
 
-export function editHabit(input: HabitFields & { habit: string; paused?: boolean }) {
+export function updateHabitTool(input: HabitFields & { habit: string; paused?: boolean }) {
   const h = findHabit(input.habit, { archived: true });
   const { habit: _ref, paused, ...fields } = input;
   const changes = Object.values(fields).some((v) => v !== undefined);

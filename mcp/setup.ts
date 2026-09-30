@@ -5,7 +5,7 @@
  * Import this before anything from src/.
  */
 
-class MemoryStorage {
+export class MemoryStorage {
   private items = new Map<string, string>();
   get length() {
     return this.items.size;

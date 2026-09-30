@@ -2,17 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 import { finalizeEvent } from 'nostr-tools/pure';
 import { getData, reload, replaceData } from '../src/lib/store';
 import { decryptText, deriveKeys, encryptText, newPhrase, partLabel } from '../src/lib/sync/crypto';
-import {
-  archiveHabitTool,
-  checkIn,
-  createHabitTool,
-  editHabit,
-  getProgress,
-  listHabits,
-  skipHabit,
-  ToolError,
-  undoCheckIn,
-} from '../mcp/tools';
+import { addHabit, archiveHabitTool, checkHabit, getSummary, getToday, listHabits, ToolError, updateHabitTool } from '../mcp/tools';
 import { OfflineError, RelaySync } from '../mcp/relays';
 import { sampleData } from '../e2e/fixtures';
 import { startRelay, startSilentRelay, startSilentTcp } from './relay-server';
@@ -31,110 +21,128 @@ beforeEach(() => {
 });
 
 describe('reading', () => {
-  it('lists the habits and how today is going', () => {
-    const r = listHabits();
-    expect(r.summary).toEqual({ done: 2, still_to_do: 4, due: 6 });
+  it("shows today's habits: done, skipped or pending, with progress and streaks", () => {
+    const r = getToday();
+    expect(r.date).toBe('2026-09-25');
+    expect(r.summary).toEqual({ done: 2, pending: 4, skipped: 0, due: 6 });
+    expect(r.habits.map((h) => h.name)).toEqual(['Water', 'Stretch', 'Workout', 'Read', 'Journal', 'Screens off 23:00']);
     const water = r.habits.find((h) => h.name === 'Water')!;
-    expect(water).toMatchObject({ id: 'water000001', type: 'count', goal: '8 glasses', status: 'partly done', amount: '5 glasses', due: true });
+    expect(water).toMatchObject({ id: 'water000001', status: 'pending', amount: 5, goal: 8, unit: 'glasses', progress: '5 of 8 glasses' });
     expect(water.streak).toEqual({ current: 12, best: 12, unit: 'days' });
+    expect(r.habits.find((h) => h.name === 'Read')).toMatchObject({ progress: '10 min of 20 min' });
     expect(r.habits.find((h) => h.name === 'Workout')).toMatchObject({ this_week: '3 of 4', status: 'done', streak: { current: 3, unit: 'weeks' } });
-    expect(listHabits({ date: '2026-09-23' }).habits.find((h) => h.name === 'Journal')).toMatchObject({ status: 'skipped' });
+    expect(getToday({ date: '2026-09-23' }).habits.find((h) => h.name === 'Journal')).toMatchObject({ status: 'skipped' });
   });
 
-  it('reports progress and streaks over a period', () => {
-    const week = getProgress({ from: '2026-09-21', to: '2026-09-25' });
+  it('lists every habit with its goal, schedule and streak', () => {
+    const r = listHabits();
+    expect(r.habits.map((h) => h.name)).toEqual(['Water', 'Stretch', 'Workout', 'Read', 'Journal', 'Screens off 23:00']);
+    expect(r.habits[0]).toMatchObject({ id: 'water000001', type: 'count', goal: '8 glasses', repeat: 'Every day', time_of_day: 'Anytime', color: 'teal', icon: 'drop', streak: { current: 12 } });
+    expect(r.habits[0]).not.toHaveProperty('status');
+  });
+
+  it('summarises completion per habit and per day over a period', () => {
+    const week = getSummary({ from: '2026-09-21', to: '2026-09-25' });
     const journal = week.habits.find((h) => h.name === 'Journal')!;
-    expect(journal).toMatchObject({ days_done: '3 of 3', hit_rate: '100%', streak: { current: 3 } });
+    expect(journal).toMatchObject({ days_done: '3 of 3', completion: '100%', streak: { current: 3 } });
     expect(journal.days!.map((d) => d.status)).toEqual(['done', 'done', 'skipped', 'done', 'not done']);
     expect(week.habits.find((h) => h.name === 'Workout')).toMatchObject({ weeks_met: '0 of 0' });
-    const read = getProgress({ habit: 'read', from: '2026-09-01' });
+    expect(week.per_day!.map((d) => d.date)).toEqual(['2026-09-21', '2026-09-22', '2026-09-23', '2026-09-24', '2026-09-25']);
+    // Friday (today): what's done so far, Stretch and Workout.
+    expect(week.per_day![4]).toEqual({ date: '2026-09-25', done: 2, of: 2 });
+    const defaults = getSummary();
+    expect([defaults.from, defaults.to]).toEqual(['2026-09-19', '2026-09-25']);
+    const read = getSummary({ habit: 'read', from: '2026-09-01' });
     expect(read.habits).toHaveLength(1);
     // 1–24 September were due (today isn't over yet); the design's history has a few misses early on.
     expect(read.habits[0]).toMatchObject({ days_done: expect.stringMatching(/^2\d of 24$/), average_per_day: expect.stringMatching(/min$/) });
     expect(read.habits[0].days).toHaveLength(25);
-    expect(() => getProgress({ from: '2025-01-01', to: '2026-09-25' })).toThrow(/366 days/);
-    expect(() => getProgress({ from: '2026-09-25', to: '2026-09-01' })).toThrow(/after/);
+    expect(() => getSummary({ from: '2025-01-01', to: '2026-09-25' })).toThrow(/366 days/);
+    expect(() => getSummary({ from: '2026-09-25', to: '2026-09-01' })).toThrow(/after/);
   });
 });
 
-describe('checking in', () => {
-  it('logs by name or id, adds amounts, and touches only that month', () => {
-    const add = checkIn({ habit: 'wat', amount: 2, add: true });
-    expect(add.result).toMatchObject({ habit: 'Water', status: 'partly done', amount: '7 glasses' });
+describe('check_habit', () => {
+  it('marks done by name or id, adds amounts, and touches only that month', () => {
+    const add = checkHabit({ habit: 'wat', amount: 2, add: true });
+    expect(add.result).toMatchObject({ name: 'Water', status: 'pending', amount: 7, progress: '7 of 8 glasses' });
     expect(add.touched).toEqual(['2026-09']);
-    expect(checkIn({ habit: 'Water' }).result).toMatchObject({ status: 'done', amount: '8 glasses' });
-    const read = checkIn({ habit: 'read00000001', amount: 25, note: 'Two chapters' });
-    expect(read.result).toMatchObject({ status: 'done', amount: '25 min', note: 'Two chapters' });
-    expect(checkIn({ habit: 'Screens off', date: '2026-08-30' }).touched).toEqual(['2026-08']);
-    expect(checkIn({ habit: 'journal' }).result.day).toEqual({ done: 5, still_to_do: 1, due: 6 });
+    expect(checkHabit({ habit: 'Water' }).result).toMatchObject({ status: 'done', amount: 8 });
+    const read = checkHabit({ habit: 'read00000001', amount: 25, note: 'Two chapters' });
+    expect(read.result).toMatchObject({ status: 'done', amount: 25, note: 'Two chapters' });
+    expect(checkHabit({ habit: 'Screens off', date: '2026-08-30' }).touched).toEqual(['2026-08']);
+    expect(checkHabit({ habit: 'journal', status: 'done' }).result.day).toEqual({ done: 5, pending: 1, due: 6 });
   });
 
-  it('skips and undoes, keeping the streak', () => {
-    expect(skipHabit({ habit: 'Journal', note: 'Too tired' }).result).toMatchObject({ status: 'skipped', note: 'Too tired', streak: { current: 3 } });
-    expect(undoCheckIn({ habit: 'Journal' }).result).toMatchObject({ status: 'not done', note: 'Too tired' });
-    expect(undoCheckIn({ habit: 'Stretch' }).result).toMatchObject({ status: 'not done', streak: { current: 6 } });
+  it('skips and takes back, keeping the streak and the note', () => {
+    expect(checkHabit({ habit: 'Journal', status: 'skipped', note: 'Too tired' }).result).toMatchObject({ status: 'skipped', note: 'Too tired', streak: { current: 3 } });
+    expect(checkHabit({ habit: 'Journal', status: 'not_done' }).result).toMatchObject({ status: 'pending', note: 'Too tired' });
+    expect(checkHabit({ habit: 'Stretch', status: 'not_done' }).result).toMatchObject({ status: 'pending', streak: { current: 6 } });
   });
 
   it('explains mistakes', () => {
-    expect(() => checkIn({ habit: 'Flossing' })).toThrow(/no habit "Flossing".*Water, Stretch/);
-    expect(() => checkIn({ habit: 's' })).toThrow(/matches 2 habits.*Stretch.*Screens off/);
-    expect(() => checkIn({ habit: 'Water', date: '2026-09-26' })).toThrow(/future/);
-    expect(() => checkIn({ habit: 'Water', date: '26/09' })).toThrow(/YYYY-MM-DD/);
-    expect(() => checkIn({ habit: 'Stretch', amount: 5 })).toThrow(/yes\/no/);
-    expect(() => checkIn({ habit: 'Water', amount: -1 })).toThrow(ToolError);
+    expect(() => checkHabit({ habit: 'Flossing' })).toThrow(/no habit "Flossing".*Water, Stretch/);
+    expect(() => checkHabit({ habit: 's' })).toThrow(/matches 2 habits.*Stretch.*Screens off/);
+    expect(() => checkHabit({ habit: 'Water', date: '2026-09-26' })).toThrow(/future/);
+    expect(() => checkHabit({ habit: 'Water', date: '26/09' })).toThrow(/YYYY-MM-DD/);
+    expect(() => checkHabit({ habit: 'Stretch', amount: 5 })).toThrow(/yes\/no/);
+    expect(() => checkHabit({ habit: 'Water', amount: -1 })).toThrow(ToolError);
+    expect(() => checkHabit({ habit: 'Water', status: 'skipped', amount: 3 })).toThrow(/only with status "done"/);
   });
 });
 
 describe('habits', () => {
-  it('creates from a sentence, with fields winning', () => {
-    const r = createHabitTool({ description: 'Meditate 10 min every morning' });
+  it('adds from a sentence, with fields winning', () => {
+    const r = addHabit({ description: 'Meditate 10 min every morning' });
     expect(r.result.created).toMatchObject({ name: 'Meditate', type: 'timer', goal: '10 min', time_of_day: 'Morning', icon: 'lotus', repeat: 'Every day' });
     expect(r.touched).toEqual(['habits']);
-    const run = createHabitTool({ description: 'Run 5 km', repeat: 'days', days: ['mon', 'thu'], color: 'ember' });
+    const run = addHabit({ description: 'Run 5 km', repeat: 'days', days: ['mon', 'thu'], color: 'ember' });
     expect(run.result.created).toMatchObject({ name: 'Run', type: 'count', goal: '5 km', repeat: 'Mon, Thu', color: 'ember', icon: 'run' });
-    expect(createHabitTool({ name: 'Floss', type: 'yes_no' }).result.created).toMatchObject({ name: 'Floss', icon: 'tooth' });
-    expect(() => createHabitTool({ name: 'water' })).toThrow(/already a habit called "Water"/);
-    expect(() => createHabitTool({})).toThrow(/name/);
-    expect(() => createHabitTool({ name: 'X', type: 'yes_no', goal: 5 })).toThrow(/no goal/);
+    expect(addHabit({ name: 'Floss', type: 'yes_no' }).result.created).toMatchObject({ name: 'Floss', icon: 'tooth' });
+    expect(() => addHabit({ name: 'water' })).toThrow(/already a habit called "Water"/);
+    expect(() => addHabit({})).toThrow(/name/);
+    expect(() => addHabit({ name: 'X', type: 'yes_no', goal: 5 })).toThrow(/no goal/);
   });
 
-  it('edits, pauses, archives and restores', () => {
-    expect(editHabit({ habit: 'Water', name: 'Water intake', goal: 10 }).result.updated).toMatchObject({ name: 'Water intake', goal: '10 glasses' });
-    expect(editHabit({ habit: 'Workout', times_per_week: 3 }).result.updated).toMatchObject({ repeat: '3× a week' });
-    expect(editHabit({ habit: 'Read', paused: true }).result.updated).toMatchObject({ paused_since: '2026-09-25' });
-    // Off today's board; the 10 minutes already logged today still show.
-    expect(listHabits().habits.find((h) => h.name === 'Read')).toMatchObject({ due: false, paused_since: '2026-09-25', status: 'partly done' });
-    expect(listHabits().summary.due).toBe(5);
-    expect(editHabit({ habit: 'Read', paused: false }).result.updated).not.toHaveProperty('paused_since');
-    expect(() => editHabit({ habit: 'Read' })).toThrow(/Nothing to change/);
+  it('updates, pauses, archives and restores', () => {
+    expect(updateHabitTool({ habit: 'Water', name: 'Water intake', goal: 10 }).result.updated).toMatchObject({ name: 'Water intake', goal: '10 glasses' });
+    expect(updateHabitTool({ habit: 'Workout', times_per_week: 3 }).result.updated).toMatchObject({ repeat: '3× a week' });
+    expect(updateHabitTool({ habit: 'Read', paused: true }).result.updated).toMatchObject({ paused_since: '2026-09-25' });
+    // Off today's board, and said why.
+    const today = getToday();
+    expect(today.habits.map((h) => h.name)).not.toContain('Read');
+    expect(today.not_due).toContainEqual({ id: 'read00000001', name: 'Read', why: 'paused' });
+    expect(today.summary.due).toBe(5);
+    expect(updateHabitTool({ habit: 'Read', paused: false }).result.updated).not.toHaveProperty('paused_since');
+    expect(() => updateHabitTool({ habit: 'Read' })).toThrow(/Nothing to change/);
 
     expect(archiveHabitTool({ habit: 'Journal' }).result).toMatchObject({ archived: { name: 'Journal', archived: true } });
     expect(listHabits().habits.map((h) => h.name)).not.toContain('Journal');
-    expect(() => checkIn({ habit: 'Journal' })).toThrow(/archived/);
+    expect(() => checkHabit({ habit: 'Journal' })).toThrow(/archived/);
     expect(listHabits({ include_archived: true }).archived!.map((h) => h.name)).toEqual(['Journal']);
     archiveHabitTool({ habit: 'Journal', restore: true });
-    expect(checkIn({ habit: 'Journal' }).result.status).toBe('done');
+    expect(checkHabit({ habit: 'Journal' }).result.status).toBe('done');
   });
 
   it('puts habits in groups, and reads one group at a time', () => {
-    expect(editHabit({ habit: 'Journal', group: 'Self-care' }).result.updated).toMatchObject({ group: 'Self-care' });
+    expect(updateHabitTool({ habit: 'Journal', group: 'Self-care' }).result.updated).toMatchObject({ group: 'Self-care' });
     // An existing group keeps its spelling.
-    expect(editHabit({ habit: 'Screens', group: ' self-CARE ' }).result.updated).toMatchObject({ group: 'Self-care' });
-    expect(createHabitTool({ description: 'Floss every day', group: 'Health' }).result.created).toMatchObject({ name: 'Floss', group: 'Health' });
+    expect(updateHabitTool({ habit: 'Screens', group: ' self-CARE ' }).result.updated).toMatchObject({ group: 'Self-care' });
+    expect(addHabit({ description: 'Floss every day', group: 'Health' }).result.created).toMatchObject({ name: 'Floss', group: 'Health' });
 
-    const all = listHabits();
-    expect(all.groups).toEqual(['Health', 'Self-care']);
-    const care = listHabits({ group: 'self-care' });
+    expect(listHabits().groups).toEqual(['Health', 'Self-care']);
+    const care = getToday({ group: 'self-care' });
     expect(care.group).toBe('Self-care');
     expect(care.habits.map((h) => h.name)).toEqual(['Journal', 'Screens off 23:00']);
-    expect(care.summary).toEqual({ done: 0, still_to_do: 2, due: 2 });
-    expect(() => listHabits({ group: 'Work' })).toThrow(/no group "Work".*Health, Self-care/);
+    expect(care.summary).toEqual({ done: 0, pending: 2, skipped: 0, due: 2 });
+    expect(listHabits({ group: 'Health' }).habits.map((h) => h.name)).toEqual(['Floss']);
+    expect(() => getToday({ group: 'Work' })).toThrow(/no group "Work".*Health, Self-care/);
 
-    const week = getProgress({ from: '2026-09-21', to: '2026-09-25' });
+    const week = getSummary({ from: '2026-09-21', to: '2026-09-25' });
     expect(week.by_group!.map((g) => g.group)).toEqual(['Health', 'Self-care']);
-    expect(getProgress({ group: 'Self-care' }).habits.map((h) => h.name)).toEqual(['Journal', 'Screens off 23:00']);
+    expect(getSummary({ group: 'Self-care' }).habits.map((h) => h.name)).toEqual(['Journal', 'Screens off 23:00']);
 
-    expect(editHabit({ habit: 'Journal', group: '' }).result.updated).not.toHaveProperty('group');
+    expect(updateHabitTool({ habit: 'Journal', group: '' }).result.updated).not.toHaveProperty('group');
   });
 });
 
@@ -158,7 +166,7 @@ describe('relay sync', () => {
     const a = client();
     await a.pull();
     expect(a.partCount).toBe(0);
-    const { touched } = checkIn({ habit: 'Journal', note: 'Wrote about the trip' });
+    const { touched } = checkHabit({ habit: 'Journal', note: 'Wrote about the trip' });
     expect(await a.push(['habits', 'settings', '2026-05', '2026-06', '2026-07', '2026-08', ...touched])).toEqual({ sent: 7, failed: [] });
     expect(await a.push(touched)).toEqual({ sent: 0, failed: [] });
     const stored = JSON.stringify([...relay.events.values()]);
@@ -169,12 +177,12 @@ describe('relay sync', () => {
     const b = client();
     await b.pull();
     expect(b.partCount).toBe(7);
-    expect(listHabits().habits.find((h) => h.name === 'Journal')).toMatchObject({ status: 'done', note: 'Wrote about the trip' });
+    expect(getToday().habits.find((h) => h.name === 'Journal')).toMatchObject({ status: 'done', note: 'Wrote about the trip' });
 
     // A later change from the first client arrives on the next (incremental) pull.
     replaceData(sampleData());
     await a.pull();
-    skipHabit({ habit: 'Water' });
+    checkHabit({ habit: 'Water', status: 'skipped' });
     await a.push(['2026-09']);
     await b.pull();
     expect(getData().logs.water000001['2026-09-25']).toMatchObject({ skipped: true });
@@ -206,7 +214,7 @@ describe('relay sync', () => {
   it('reports a relay that refuses uploads', async () => {
     const c = client();
     await c.pull();
-    checkIn({ habit: 'Stretch', date: '2026-09-18' });
+    checkHabit({ habit: 'Stretch', date: '2026-09-18' });
     relay.refuse(true);
     expect(await c.push(['2026-09'])).toEqual({ sent: 0, failed: ['2026-09'] });
   });
@@ -234,7 +242,7 @@ describe('relay sync', () => {
       await c.pull();
       // Done shortly after the working relay answered, not after the silent ones time out.
       expect(Date.now() - started).toBeLessThan(4000);
-      checkIn({ habit: 'Read', amount: 30 });
+      checkHabit({ habit: 'Read', amount: 30 });
       expect(await c.push(['2026-09'])).toEqual({ sent: 1, failed: [] });
       started = Date.now();
       await c.pull();

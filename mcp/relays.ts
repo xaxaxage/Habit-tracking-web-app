@@ -230,6 +230,11 @@ export class RelaySync {
     if (await this.send(part.name, json, await sha256(json))) this.lastAnnounced = Date.now();
   }
 
+  /** Close the relay connections; the next pull or push opens them again. */
+  disconnect() {
+    this.pool.close(this.relays);
+  }
+
   close() {
     this.pool.destroy();
   }

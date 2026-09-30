@@ -37,6 +37,8 @@ export function startRelay() {
     url: () => `ws://127.0.0.1:${(server.address() as AddressInfo).port}`,
     events,
     refuse: (on: boolean) => (refuse = on),
+    /** Clients connected right now. */
+    connections: () => server.clients.size,
     close: () => new Promise((r) => server.close(r)),
   };
 }

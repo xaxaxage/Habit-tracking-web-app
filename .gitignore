@@ -5,3 +5,4 @@ dist
 test-results
 playwright-report
 scratch-e2e
+.vercel
