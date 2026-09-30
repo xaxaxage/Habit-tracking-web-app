@@ -2,13 +2,14 @@
 
 A habit tracker for iPhone and the computer, built as an installable web app from the design in
 [`design/`](design/). Tap a tile to check in, see your week and your streaks. No server and no account: your
-habits stay on your devices, and sync between them end-to-end encrypted with a 12-word key. A Claude Desktop
-extension lets you ask Claude how your habits are going and check in by just saying it.
+habits stay on your devices, and sync between them end-to-end encrypted with a 12-word key. A Claude connector
+lets you ask Claude (claude.ai, the Claude phone app, Claude Desktop) how your habits are going and check them off
+by just saying it.
 
 **App:** https://xaxaxage.github.io/Habit-tracking-web-app/
 
 Built the same way as the [calorie tracker](https://github.com/xaxaxage/Calorie-tracking-web-app), reusing its
-tested sync, service worker, palettes, animations, Claude Desktop extension and deploy workflow.
+tested sync, service worker, palettes, animations, Claude connector and deploy workflow.
 
 ## What it does
 
@@ -44,7 +45,7 @@ tested sync, service worker, palettes, animations, Claude Desktop extension and 
   week: a skipped day lowers that week's goal by one); a time of day; one of twelve colors and 67 icons, grouped
   (health, movement, mind, food and drink, learning and work, creative, home and money, people). The icon is
   guessed from the name ("Walk the dog" gets a paw) and can be changed.
-- **Settings** – sync between devices (with the device list and Claude Desktop), appearance, weeks starting on
+- **Settings** – sync between devices (with the device list), Use with Claude, appearance, weeks starting on
   Monday or Sunday, archived habits, backups, delete everything, and the app's version.
 - **Appearance** – eight palettes: Night (the design), Harbor, Matcha, Ocean, Lavender, Graphite, and the dark
   Espresso and OLED black, plus Auto (Harbor by day, Night in dark mode). Text colors are adjusted until they are
@@ -125,53 +126,119 @@ Public relays are run by volunteers and can be slow or go away, which is why sev
 keeps a full copy; export a backup now and then. Anyone with the 12 words can read and change your habits.
 **Delete everything** deletes on every synced device.
 
-## Use with Claude Desktop
+## Use with Claude
 
-Ask Claude *"how are my habits going this week?"*, *"what's my reading streak?"*, or just tell it *"I drank 3
-glasses of water"*, *"skip the workout today"*, *"add a habit: stretch 10 minutes every morning"*. The change
-shows up in the app within seconds.
+Claude can read and check off your habits — on claude.ai, in the Claude app on your phone and in Claude
+Desktop: ask *"what's left for today?"*, *"how did my habits go this week?"*, *"what's my reading
+streak?"*, or just say *"I drank 3 glasses of water"*, *"skip the workout today"*, *"add a habit: stretch 10
+minutes every morning"*. The change shows up in the app on your phone within seconds.
 
-It's a small local MCP server that uses the same encrypted sync as your devices, so turn on **Sync between
-devices** first.
+It works through a connector (an MCP server) that uses the same encrypted sync as your devices, so turn on
+**Sync between devices** first. Then:
 
-**Install (Windows or Mac):**
+1. In the app: **Settings → Use with Claude → Show my connector address → Copy the address**.
+2. In Claude on a computer (claude.ai or Claude Desktop): **Customize → Connectors → + → Add custom
+   connector**, name it *Habit Tracker*, paste the address, **Add**. (Custom connectors work on every Claude
+   plan; the Free plan allows one.)
+3. That's it — it works in the Claude phone app too (connectors are added on the web or desktop, then used
+   everywhere).
 
-1. Download the extension: in the app, **Settings → Sync between devices → Use with Claude Desktop → Download**,
-   or directly:
-   [`habit-tracker.mcpb`](https://xaxaxage.github.io/Habit-tracking-web-app/mcp/habit-tracker.mcpb).
-2. Open the file with Claude Desktop: double-click it, or drag it into **Settings → Extensions**. Click
-   **Install**.
-3. When it asks for the **sync key**, paste your 12 words (**Show sync key** or **Copy the 12 words** in the app).
-4. Start a new chat and ask about your habits. (If Claude doesn't use it, check that **Habit Tracker** is turned on
-   in **Settings → Extensions**.)
-
-Claude Desktop runs it with its own built-in Node.js; nothing else needs installing. To update, download and open
-the file again. It appears in the app's device list as **Claude Desktop · Windows**. If you change the sync key,
-paste the new words into the extension's settings too (**Settings → Extensions → Habit Tracker**).
+Everyone using the app gets their own address the same way; one connector server answers for all of them.
+It appears in the app's device list as **Claude (online connector)**.
 
 **What Claude can do:**
 
 | Tool | |
 | --- | --- |
-| `list_habits` | Every habit (or one group), in the order you usually do them, and how today (or any day) is going: done, amount, skipped, note, streak |
-| `get_progress` | Progress and streaks over a period, per habit, per group and day by day |
-| `check_in` | Log a habit as done, or an amount (`add` adds to the day's total), on any day, by name or id |
-| `undo_check_in` | Take back a check-in or a skip |
-| `skip_habit` | Skip a day; the streak stays |
-| `create_habit` | Add a habit from a sentence ("Read 20 min every evening") and/or fields |
-| `edit_habit` | Change the name, type, goal, schedule, time of day, color, icon or group; pause or resume |
+| `get_today` | The habits due today (or any day), in the order you usually do them: done, skipped or pending, progress for counts and timers ("5 of 8 glasses"), this week for "times a week" habits, streak, note; and what isn't due and why |
+| `get_summary` | Completion per habit and per day over a period (default: the last 7 days), per group too, with current and best streaks |
+| `check_habit` | Mark a habit done (with an amount for counts and timers; `add` adds to the day's total), skipped or not done, on any day, by name or id |
+| `list_habits` | Every habit (or one group) with its goal, schedule, time of day, color, icon, group and streak |
+| `add_habit` | Add a habit from a sentence ("Read 20 min every evening") and/or fields |
+| `update_habit` | Change the name, type, goal, schedule, time of day, color, icon or group; pause or resume |
 | `archive_habit` | Take a habit off the board keeping its history, or put it back |
+
+**How the address works:** it is `https://<server>/mcp/<your sync key, sealed>?tz=<your time zone>`. The
+server seals your sync key with its own secret (when the app asks it to, at `/link`), so the address doesn't
+show the key to anyone, and only that server can open it. Treat it like a password: anyone with it can read
+and change your habits. The time zone makes "today" match your phone (servers run on UTC); if your sync uses
+relays other than the app's defaults, the address names them too (`&r=…`). After you change your sync key, the
+old address stops working: copy the new one and replace it in Claude.
+
+**Privacy:** to answer Claude, the connector server opens your habits, so whoever runs it could see them — for
+this app's shared server, that's its maker. What it reads goes into your conversation with Claude, like anything
+else you share there. The sync key is never shown to Claude. For habits that are opened only by you, host the
+connector yourself (below) or use the Claude Desktop extension.
+
+### Host the connector
+
+The connector is `mcp/cloud.ts`, built for [Vercel](https://vercel.com)'s free plan (it runs anywhere Node.js 22
+runs, too). The app's own builds use `habits.xaxaxage.vercel.app`; to host one — for yourself, or for your
+friends — do this once:
+
+1. Open [vercel.com/new](https://vercel.com/new), sign in with GitHub and **import this repository** (fork it
+   first if it isn't in your account). Set **Application Preset** to *Other*; the rest comes from `vercel.json`
+   (`npm ci`, then `npm run build:cloud`, which writes Vercel's Build Output: one Node.js 22 function that
+   answers every path).
+2. Add an **Environment Variable** `CONNECTOR_SECRET`: 32 or more random characters (from a password
+   generator). It seals everyone's addresses; changing it later makes everyone copy a new address. Deploy.
+3. Open the project's address listed under **Domains** (not a single deployment's address, which Vercel keeps
+   private). It should say *"Connector addresses: ready"*.
+4. In the app: **Settings → Use with Claude → Use your own connector server**, enter that address, **Use**. Or,
+   for everyone using your build of the app, set `SHARED_CONNECTOR_HOST` in `src/lib/connector.ts` (or
+   `VITE_CONNECTOR_HOST` when building).
+
+Optional settings: `TIME_ZONE` (for addresses without `?tz=`), `RELAYS` (for addresses without `&r=`) and
+`DEVICE_NAME` (its name in the app's device list).
+
+**Free plan limits** (Hobby, per month, per Vercel account; see [vercel.com/docs/limits](https://vercel.com/docs/limits)
+for the current figures): 1,000,000 function calls, 4 hours of active CPU (time spent waiting for the sync
+relays doesn't count), 360 GB-hours of memory, for personal, non-commercial use. Going over pauses the project
+until the 30-day window resets; there's no bill. A question to Claude takes a few calls of roughly 0.1–0.3 s of
+CPU each, so 10–20 people asking a few times a day fit — watch **Usage** in the Vercel dashboard. People's
+habits are kept in the server's memory only while it's running (at most 40 people, each forgotten after 6 hours
+without a question), and it closes its relay connections whenever no question is being answered.
+
+<details>
+<summary>Somewhere other than Vercel</summary>
+
+`npm run build:cloud` builds it to `.vercel/output/functions/mcp.func/index.mjs`, one file with everything
+included. Any host that runs Node.js 22 and gives it an HTTPS address works: start it with
+`CONNECTOR_SECRET="…" PORT=8787 node index.mjs`. It speaks MCP's Streamable HTTP without sessions (stateless,
+JSON responses; GET and DELETE get 405), so it suits serverless hosts.
+
+</details>
+
+### Claude Desktop extension (runs on your computer)
+
+Instead of the online connector, Claude Desktop can run the connector on your computer, so your habits are
+opened only there (it doesn't reach Claude on your phone, though). It has the same tools and uses the same
+encrypted sync as your devices, so turn on **Sync between devices** first.
+
+**Install (Windows or Mac):**
+
+1. Download the extension: in the app, **Settings → Use with Claude → Claude Desktop extension → Download**, or
+   directly: [`habit-tracker.mcpb`](https://xaxaxage.github.io/Habit-tracking-web-app/mcp/habit-tracker.mcpb).
+2. Open the file with Claude Desktop: double-click it, or drag it into **Settings → Extensions**. Click
+   **Install**.
+3. When it asks for the **sync key**, paste your 12 words (**Show sync key** or **Copy the 12 words** in the app).
+4. Start a new chat and ask about your habits. (If Claude doesn't use it, check that **Habit Tracker** is turned
+   on in **Settings → Extensions**.)
+
+Claude Desktop runs it with its own built-in Node.js; nothing else needs installing. It appears in the app's
+device list as **Claude Desktop · Windows**. If you change the sync key, paste the new words into the extension's
+settings too (**Settings → Extensions → Habit Tracker**).
 
 **Privacy:** the extension runs on your computer and talks only to the sync relays. What it reads goes into your
 conversation with Claude, like anything else you share there. The sync key is stored by Claude Desktop, marked as
 sensitive, and never shown to Claude. With a key that has no habits (a typo), it writes nothing at all, not even
 itself into a device list.
 
-**Updates:** the web app updates itself; the extension doesn't. When the app gains something new (colors, icons,
-groups), download the extension again (**Settings → Sync between devices → Use with Claude Desktop → Download**)
-and open it to replace the old one. Versions from 30 September 2026 on keep what they don't know yet (a color, an
-icon, a field of a habit) instead of syncing a habit back without it; older extensions don't, so replace one of
-those now: it would take habits out of their groups and forget where you moved them.
+**Updates:** the web app and the online connector update themselves; the extension doesn't. When the app gains
+something new, download the extension again and open it to replace the old one. Since 30 September 2026 it has
+the same tools as the online connector (`get_today`, `check_habit`, …) and keeps what it doesn't know yet (a
+color, an icon, a field of a habit) instead of syncing a habit back without it; older extensions don't, so
+replace one of those now.
 
 <details>
 <summary>Without the extension (other MCP apps, Claude Code, manual setup on Windows)</summary>
@@ -240,6 +307,11 @@ States and screens the design doesn't show were designed in the same style:
 - **Reminders** are out of scope, so the New habit screen's "Reminder" field became **Icon**, and a habit's page
   says "Evening" instead of "reminder 21:30". A fifth habit color (Spanish orange, used by the design's Journal)
   can be picked too.
+- **Claude connector:** ported from the calorie tracker (the same request queue, sync without a browser, sealed
+  addresses and Vercel build). Its tools follow this app's data: `get_today`, `get_summary`, `check_habit`,
+  `list_habits`, `add_habit`, `update_habit`, `archive_habit`. The online connector seals addresses only with
+  `CONNECTOR_SECRET`; the calorie tracker's older single-person address made from `SYNC_KEY` isn't carried over,
+  since this app never had one.
 
 ## Development
 
@@ -248,9 +320,11 @@ Requires Node.js 22.
 ```bash
 npm install
 npm run dev          # local dev server
-npm test             # unit tests (Vitest), including the built Claude Desktop server over stdio
-npm run build        # type-check, build the app to dist/ and the extension to dist/mcp/
-npm run test:e2e     # Playwright against the production build (after npm run build), at iPhone size
+npm test             # unit tests (Vitest), including the built Claude Desktop server over stdio and the
+                     # online connector over HTTP with relays inside the test
+npm run build        # type-check, build the app to dist/ and the Claude Desktop extension to dist/mcp/
+npm run build:cloud  # the online Claude connector, for Vercel, to .vercel/output/
+npm run test:e2e     # Playwright against the production build (after both builds), at iPhone size
 npm run preview      # serve the production build
 ```
 
@@ -267,7 +341,10 @@ Playwright uses its Chromium (in the cloud container, the preinstalled one); the
   earlier days, keyboard use, pausing and archiving, a full storage, backup round trips, palettes and animations;
 - **offline and updates** – against a copy of the build served from a sub-folder like GitHub Pages;
 - **sync** – two browser contexts and relays that run inside the test (two that work, one that accepts the
-  connection and never answers, one that refuses); tests never contact a public relay.
+  connection and never answers, one that refuses); tests never contact a public relay;
+- **Claude** – two phones with different keys each copy their connector address; a real MCP client connects
+  with each to the built online connector (running inside the test) and a habit checked off through it reaches
+  only that person's phone.
 
 To check the extension's manifest with the official tool without adding it to the project:
 
@@ -285,12 +362,13 @@ downloads, and caches only HTML as the app page.
 ```
 src/
   app.tsx            routes → screens
-  screens/           Today, Week, HabitPage (history), HabitForm (new/edit), Settings, SyncSettings, AppearanceSettings
+  screens/           Today, Week, HabitPage (history), HabitForm (new/edit), Settings, SyncSettings, ClaudeSettings, AppearanceSettings
   components/        tiles, the hold-a-tile sheet, icons, bottom bar, toast, sheets
   lib/               store (localStorage), habits (due days, streaks, stats), parse (one-sentence habits),
-                     theme (palettes), motion, dates, router
+                     theme (palettes), motion, dates, router, connector (the Use with Claude address)
   lib/sync/          sync key and encryption, parts and merging, relay engine, devices
-mcp/                 Claude Desktop extension: MCP tools and sync without a browser (built by vite.mcp.config.ts)
+mcp/                 the Claude connector: tools (tools.ts, connector.ts), sync without a browser (relays.ts);
+                     server.ts for Claude Desktop (vite.mcp.config.ts), cloud.ts + seal.ts online (vite.cloud.config.ts)
 design/              the design mockup (Design.html) and its boards, readable
 tests/               unit tests; e2e/  Playwright tests
 scripts/             make-icons.mjs draws the app icons
@@ -298,8 +376,9 @@ scripts/             make-icons.mjs draws the app icons
 
 ## Deploy
 
-`.github/workflows/deploy.yml` runs the unit and Playwright tests, builds, checks the extension's manifest and
-publishes to GitHub Pages on every push to `main` (and to this feature branch).
+`.github/workflows/deploy.yml` runs the unit and Playwright tests, builds the app, the extension and the online
+connector, checks the extension's manifest and publishes the app to GitHub Pages on every push to `main` (and to
+this feature branch). The online connector deploys on Vercel (see **Host the connector**).
 
 One-time setup: in the repository, **Settings → Pages → Source: GitHub Actions**. Any static host works too:
 upload `dist/`. The app uses relative paths and hash routes, so it can live in a sub-folder.

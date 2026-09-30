@@ -2,3 +2,8 @@
 
 /** "2026-09-25 13:40 · abc1234": when the build was made, and from which commit. */
 declare const __APP_VERSION__: string;
+
+interface ImportMetaEnv {
+  /** The shared online Claude connector's host, for a build of the app that uses its own. */
+  readonly VITE_CONNECTOR_HOST?: string;
+}

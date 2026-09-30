@@ -37,12 +37,13 @@ function statusText(s: SyncStatus): string {
   }
 }
 
-async function copy(text: string) {
+/** Copy to the clipboard, and say so. */
+export async function copy(text: string, what = 'Sync key', fallback = 'Select the words and copy them instead.') {
   try {
     await navigator.clipboard.writeText(text);
-    showToast('Sync key copied');
+    showToast(`${what} copied`);
   } catch {
-    showToast("Couldn't copy. Select the words and copy them instead.");
+    showToast(`Couldn't copy. ${fallback}`);
   }
 }
 
@@ -418,29 +419,6 @@ export function SyncSettings() {
       <DeviceList devices={config?.devices ?? {}} />
 
       <details class="fold">
-        <summary>Use with Claude Desktop</summary>
-        <div class="stack-form">
-          <p class="hint">
-            Ask Claude on your computer how your habits are going, or check in by just saying it ("I read for 25 minutes").
-            It uses these same habits, through sync.
-          </p>
-          <ol class="steps">
-            <li>Download the extension below.</li>
-            <li>Open the file with Claude Desktop (double-click it, or drag it into Settings → Extensions) and install.</li>
-            <li>When it asks for the sync key, paste your 12 words.</li>
-          </ol>
-          <a class="btn quiet" href="./mcp/habit-tracker.mcpb" download="habit-tracker.mcpb">
-            Download the Claude Desktop extension
-          </a>
-          {config && (
-            <button type="button" class="btn quiet" onClick={() => copy(config.phrase)}>
-              Copy the 12 words
-            </button>
-          )}
-        </div>
-      </details>
-
-      <details class="fold">
         <summary>Relays ({config?.relays.length ?? 0})</summary>
         <div class="stack-form">
           <p class="hint">
@@ -488,7 +466,7 @@ export function SyncSettings() {
             This is your <strong>new sync key</strong>. Your habits move to it, and the old key stops working: devices still
             using it stop syncing until you enter the new key there. Use this if a device is lost or someone else has seen
             your words. <strong>Save the new words</strong>: you'll enter them on each device you keep (and in Claude
-            Desktop, if you use it).
+            Desktop, if you use it). Your Claude connector gets a new address too (Use with Claude, below).
           </p>
           <Words phrase={phrase} />
           <button type="button" class="btn quiet" onClick={() => copy(phrase)}>

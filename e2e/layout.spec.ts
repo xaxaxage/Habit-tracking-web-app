@@ -78,6 +78,19 @@ const SCREENS: Screen[] = [
       await expect(page.getByRole('list', { name: 'Sync key' }).getByRole('listitem')).toHaveCount(12);
     },
   },
+  {
+    name: 'settings, Claude connector address and folds',
+    hash: '#/settings',
+    synced: true,
+    open: async (page) => {
+      await page.route(/^https:\/\/[^/]+\/link$/, (route) => route.fulfill({ json: { token: 'A'.repeat(60) }, headers: { 'access-control-allow-origin': '*' } }));
+      const card = page.locator('section', { has: page.getByRole('heading', { name: 'Use with Claude' }) });
+      await card.getByRole('button', { name: 'Show my connector address' }).click();
+      await expect(card.getByLabel('Your connector address')).toBeVisible();
+      for (const fold of await card.locator('details').all()) await fold.locator('summary').click();
+      await card.getByLabel('Your connector server').fill('not an address');
+    },
+  },
   { name: 'missing page', hash: '#/nothing-here' },
 ];
 

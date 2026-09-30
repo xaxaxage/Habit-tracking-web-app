@@ -1241,6 +1241,26 @@
   margin-bottom: 8px;
 }
 
+/* ── Use with Claude ──────────────────────────────────────────────────── */
+.connector-step {
+  margin-top: 8px;
+}
+/* The whole address, wrapped anywhere: it's one long word. */
+.connector-url {
+  display: block;
+  padding: 12px 14px;
+  border-radius: var(--r-field);
+  background: var(--raised);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  user-select: all;
+  -webkit-user-select: all;
+}
+
 /* ── Sync ─────────────────────────────────────────────────────────────── */
 .stack-form {
   display: flex;

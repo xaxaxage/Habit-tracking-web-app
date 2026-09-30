@@ -16,6 +16,7 @@ import { saveFile } from '../lib/files';
 import { showToast } from '../lib/toast';
 import { loadSyncConfig } from '../lib/sync/state';
 import { SyncSettings } from './SyncSettings';
+import { ClaudeSettings } from './ClaudeSettings';
 import { AppearanceSettings } from './AppearanceSettings';
 import { groupsOf, matchGroup, MAX_GROUP, sameGroup } from '../lib/views';
 
@@ -261,6 +262,8 @@ export function Settings() {
       </header>
 
       <SyncSettings />
+
+      <ClaudeSettings />
 
       <AppearanceSettings />
 
