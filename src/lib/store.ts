@@ -79,6 +79,29 @@ function isNewerId(value: unknown): value is string {
   return typeof value === 'string' && /^[a-z][a-z0-9-]{0,23}$/.test(value);
 }
 
+const HABIT_FIELDS = new Set([
+  'id', 'name', 'kind', 'target', 'unit', 'step', 'schedule', 'time', 'color', 'icon', 'order', 'start', 'pauses',
+  'createdAt', 'updatedAt', 'archivedAt', 'placed', 'group',
+]);
+
+/**
+ * Fields this version doesn't know, from a newer version on another device:
+ * kept as they are (in name order, after the known ones), so this device
+ * never syncs the habit back without them. Small plain values only.
+ */
+function newerFields(raw: Record<string, unknown>): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  let n = 0;
+  for (const key of Object.keys(raw).sort()) {
+    if (HABIT_FIELDS.has(key) || !/^[a-z][a-zA-Z0-9]{0,31}$/.test(key) || n >= 10) continue;
+    const json = JSON.stringify(raw[key]);
+    if (json === undefined || json === 'null' || json.length > 2000) continue;
+    out[key] = JSON.parse(json);
+    n++;
+  }
+  return out;
+}
+
 /** A valid habit with its fields in a fixed order, or undefined. */
 export function cleanHabit(raw: any): Habit | undefined {
   if (!raw || typeof raw !== 'object' || !isHabitId(raw.id)) return undefined;
@@ -109,7 +132,7 @@ export function cleanHabit(raw: any): Habit | undefined {
   if (placed) habit.placed = placed;
   const group = cleanGroup(raw.group);
   if (group) habit.group = group;
-  return habit;
+  return { ...habit, ...newerFields(raw) };
 }
 
 /** A valid log with its fields in a fixed order (empty ones left out), or undefined. */

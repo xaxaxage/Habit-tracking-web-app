@@ -115,6 +115,27 @@ describe('habits', () => {
     archiveHabitTool({ habit: 'Journal', restore: true });
     expect(checkIn({ habit: 'Journal' }).result.status).toBe('done');
   });
+
+  it('puts habits in groups, and reads one group at a time', () => {
+    expect(editHabit({ habit: 'Journal', group: 'Self-care' }).result.updated).toMatchObject({ group: 'Self-care' });
+    // An existing group keeps its spelling.
+    expect(editHabit({ habit: 'Screens', group: ' self-CARE ' }).result.updated).toMatchObject({ group: 'Self-care' });
+    expect(createHabitTool({ description: 'Floss every day', group: 'Health' }).result.created).toMatchObject({ name: 'Floss', group: 'Health' });
+
+    const all = listHabits();
+    expect(all.groups).toEqual(['Health', 'Self-care']);
+    const care = listHabits({ group: 'self-care' });
+    expect(care.group).toBe('Self-care');
+    expect(care.habits.map((h) => h.name)).toEqual(['Journal', 'Screens off 23:00']);
+    expect(care.summary).toEqual({ done: 0, still_to_do: 2, due: 2 });
+    expect(() => listHabits({ group: 'Work' })).toThrow(/no group "Work".*Health, Self-care/);
+
+    const week = getProgress({ from: '2026-09-21', to: '2026-09-25' });
+    expect(week.by_group!.map((g) => g.group)).toEqual(['Health', 'Self-care']);
+    expect(getProgress({ group: 'Self-care' }).habits.map((h) => h.name)).toEqual(['Journal', 'Screens off 23:00']);
+
+    expect(editHabit({ habit: 'Journal', group: '' }).result.updated).not.toHaveProperty('group');
+  });
 });
 
 describe('relay sync', () => {

@@ -36,6 +36,7 @@ import { autoColor, parseHabit } from '../src/lib/parse';
 import { guessIcon, HABIT_ICONS, isIconId } from '../src/lib/icons';
 import { buildParts } from '../src/lib/sync/parts';
 import { boardOrder } from '../src/lib/order';
+import { cleanGroup, groupsOf, matchGroup, sameGroup } from '../src/lib/views';
 
 /**
  * What each tool does to the habits, apart from talking to the relays.
@@ -111,6 +112,7 @@ function habitOut(h: Habit) {
     time_of_day: TIME_LABEL[h.time],
     color: h.color,
     icon: h.icon,
+    ...(h.group ? { group: h.group } : {}),
     ...(currentPause(h) ? { paused_since: currentPause(h)!.from } : {}),
     ...(h.archivedAt ? { archived: true } : {}),
   };
@@ -138,13 +140,23 @@ function monthParts(date: string): string[] {
   return [...buildParts(getData()).keys()].filter((n) => n === m || n.startsWith(`${m}~`));
 }
 
+/** The group asked for, spelled as in the app, or an error listing the groups there are. */
+function checkGroup(name: string): string {
+  const groups = groupsOf(getData().habits);
+  const found = groups.find((g) => sameGroup(g, cleanGroup(name)));
+  if (found) return found;
+  throw new ToolError(`There is no group "${name}".${groups.length ? ` The groups are: ${groups.join(', ')}.` : ' No habit is in a group yet.'}`);
+}
+
 // ── Reading ───────────────────────────────────────────────────────────────
 
-export function listHabits(input: { date?: string; include_archived?: boolean } = {}) {
+export function listHabits(input: { date?: string; include_archived?: boolean; group?: string } = {}) {
   const today = todayKey();
   const date = checkDate(input.date);
   const data = getData();
-  const board = boardFor(data, date, today, boardOrder(data, today));
+  const group = input.group ? checkGroup(input.group) : undefined;
+  const board = boardFor(data, date, today, boardOrder(data, today).filter((h) => !group || sameGroup(h.group, group)));
+  const groups = groupsOf(boardHabits(data));
   const habits = [...board.due, ...board.other].map((t) => {
     const h = t.habit;
     const w = isWeekly(h) ? weekProgress(h, data.logs[h.id], date, today, data.settings.weekStart) : undefined;
@@ -156,17 +168,20 @@ export function listHabits(input: { date?: string; include_archived?: boolean } 
       ...(w ? { this_week: `${w.done} of ${h.schedule.type === 'weekly' ? h.schedule.times : 7}` } : {}),
     };
   });
-  const archived = input.include_archived ? data.habits.filter((h) => h.archivedAt).map(habitOut) : undefined;
+  const archived = input.include_archived ? data.habits.filter((h) => h.archivedAt && (!group || sameGroup(h.group, group))).map(habitOut) : undefined;
   return {
     date,
     today,
+    ...(group ? { group } : {}),
     summary: { done: board.done, still_to_do: board.left, due: board.total },
+    order: 'The order the user usually does them in (as on the board in the app).',
     habits,
+    ...(groups.length && !group ? { groups } : {}),
     ...(archived ? { archived } : {}),
   };
 }
 
-export function getProgress(input: { from?: string; to?: string; habit?: string } = {}) {
+export function getProgress(input: { from?: string; to?: string; habit?: string; group?: string } = {}) {
   const today = todayKey();
   const to = checkDate(input.to);
   const from = input.from ? checkDate(input.from) : addDays(to, -6);
@@ -174,14 +189,22 @@ export function getProgress(input: { from?: string; to?: string; habit?: string 
   if (span < 0) throw new ToolError('"from" must not be after "to".');
   if (span > 365) throw new ToolError('Ask for at most 366 days at a time.');
   const data = getData();
-  const habits = input.habit ? [findHabit(input.habit, { archived: true })] : boardOrder(data, todayKey());
+  const group = input.group ? checkGroup(input.group) : undefined;
+  const habits = input.habit
+    ? [findHabit(input.habit, { archived: true })]
+    : boardOrder(data, todayKey()).filter((h) => !group || sameGroup(h.group, group));
   const withDays = !!input.habit || span <= 31;
   let hit = 0;
   let due = 0;
+  const byGroup = new Map<string, { hit: number; due: number }>();
   const out = habits.map((h) => {
     const s = statsOf(h, data.logs[h.id], from, to, today, data.settings.weekStart);
     hit += s.hit;
     due += s.due;
+    if (h.group) {
+      const g = byGroup.get(h.group) ?? { hit: 0, due: 0 };
+      byGroup.set(h.group, { hit: g.hit + s.hit, due: g.due + s.due });
+    }
     const days: { date: string; status: string; amount?: string; note?: string }[] = [];
     if (withDays) {
       const first = firstDay(h, data.logs[h.id]);
@@ -193,6 +216,7 @@ export function getProgress(input: { from?: string; to?: string; habit?: string 
     return {
       id: h.id,
       name: h.name,
+      ...(h.group ? { group: h.group } : {}),
       repeat: repeatLabel(h.schedule),
       [isWeekly(h) ? 'weeks_met' : 'days_done']: `${s.hit} of ${s.due}`,
       hit_rate: s.rate === null ? null : `${s.rate}%`,
@@ -201,11 +225,16 @@ export function getProgress(input: { from?: string; to?: string; habit?: string 
       ...(withDays ? { days } : {}),
     };
   });
+  const rate = (x: { hit: number; due: number }) => (x.due ? `${Math.round((x.hit / x.due) * 100)}%` : null);
   return {
     from,
     to,
     today,
-    overall_hit_rate: due ? `${Math.round((hit / due) * 100)}%` : null,
+    ...(group ? { group } : {}),
+    overall_hit_rate: rate({ hit, due }),
+    ...(byGroup.size > 1 && !group && !input.habit
+      ? { by_group: groupsOf(habits).map((g) => ({ group: g, hit_rate: rate(byGroup.get(g) ?? { hit: 0, due: 0 }) })) }
+      : {}),
     note: 'Skipped days, days a habit is paused or not scheduled, and today until it is done do not count against the hit rate.',
     habits: out,
   };
@@ -268,6 +297,8 @@ export interface HabitFields {
   time_of_day?: string;
   color?: string;
   icon?: string;
+  /** A group name; "" takes it out of its group. */
+  group?: string;
 }
 
 function scheduleFrom(f: HabitFields, current: Schedule): Schedule {
@@ -332,6 +363,8 @@ function applyFields(base: HabitInput, f: HabitFields): HabitInput {
     if (!isIconId(f.icon)) throw new ToolError(`icon must be one of: ${HABIT_ICONS.map((i) => i.id).join(', ')}.`);
     out.icon = f.icon;
   }
+  // An existing group keeps its spelling ("self care" → "Self care"); a new name starts a group.
+  if (f.group !== undefined) out.group = matchGroup(f.group, groupsOf(getData().habits));
   return out;
 }
 

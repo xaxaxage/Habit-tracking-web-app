@@ -238,4 +238,15 @@ describe('backups', () => {
     }
   });
 
+  it('keeps fields only a newer version knows, after its own, in name order', () => {
+    const raw = { id: 'new12345', name: 'Surf', createdAt: 1, updatedAt: 1, zoneTag: 'beach', reminder: { at: '07:00' }, '1bad': 1, 'bad key': 2, huge: 'x'.repeat(3000), gone: null };
+    const h = parseData({ version: 1, habits: [raw] }).habits[0];
+    expect(h).toMatchObject({ reminder: { at: '07:00' }, zoneTag: 'beach' });
+    expect(Object.keys(h).slice(-2)).toEqual(['reminder', 'zoneTag']);
+    for (const key of ['1bad', 'bad key', 'huge', 'gone']) expect(h).not.toHaveProperty(key);
+    // Editing it here keeps them.
+    replaceData(parseData({ version: 1, habits: [raw] }));
+    updateHabit('new12345', { name: 'Surfing' });
+    expect(getHabit('new12345')).toMatchObject({ name: 'Surfing', reminder: { at: '07:00' }, zoneTag: 'beach' });
+  });
 });

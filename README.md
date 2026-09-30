@@ -153,13 +153,13 @@ paste the new words into the extension's settings too (**Settings → Extensions
 
 | Tool | |
 | --- | --- |
-| `list_habits` | Every habit and how today (or any day) is going: done, amount, skipped, note, streak |
-| `get_progress` | Progress and streaks over a period, per habit and day by day |
+| `list_habits` | Every habit (or one group), in the order you usually do them, and how today (or any day) is going: done, amount, skipped, note, streak |
+| `get_progress` | Progress and streaks over a period, per habit, per group and day by day |
 | `check_in` | Log a habit as done, or an amount (`add` adds to the day's total), on any day, by name or id |
 | `undo_check_in` | Take back a check-in or a skip |
 | `skip_habit` | Skip a day; the streak stays |
 | `create_habit` | Add a habit from a sentence ("Read 20 min every evening") and/or fields |
-| `edit_habit` | Change the name, type, goal, schedule, time of day, color or icon; pause or resume |
+| `edit_habit` | Change the name, type, goal, schedule, time of day, color, icon or group; pause or resume |
 | `archive_habit` | Take a habit off the board keeping its history, or put it back |
 
 **Privacy:** the extension runs on your computer and talks only to the sync relays. What it reads goes into your
@@ -167,11 +167,11 @@ conversation with Claude, like anything else you share there. The sync key is st
 sensitive, and never shown to Claude. With a key that has no habits (a typo), it writes nothing at all, not even
 itself into a device list.
 
-**Updates:** the web app updates itself; the extension doesn't. When the app gains colors or icons, download the
-extension again (**Settings → Sync between devices → Use with Claude Desktop → Download**) and open it to replace
-the old one. Versions from now on keep a color or icon they don't know yet (showing it as teal or a check mark)
-instead of syncing it back as the default; extensions downloaded before 28 September 2026 don't, so replace one of
-those now.
+**Updates:** the web app updates itself; the extension doesn't. When the app gains something new (colors, icons,
+groups), download the extension again (**Settings → Sync between devices → Use with Claude Desktop → Download**)
+and open it to replace the old one. Versions from 30 September 2026 on keep what they don't know yet (a color, an
+icon, a field of a habit) instead of syncing a habit back without it; older extensions don't, so replace one of
+those now: it would take habits out of their groups and forget where you moved them.
 
 <details>
 <summary>Without the extension (other MCP apps, Claude Code, manual setup on Windows)</summary>

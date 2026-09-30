@@ -178,15 +178,21 @@ const fields = {
   time_of_day: z.enum(['anytime', 'morning', 'afternoon', 'evening']).optional(),
   color: z.enum(HABIT_COLORS as [string, ...string[]]).optional(),
   icon: z.enum(HABIT_ICONS.map((i) => i.id) as [string, ...string[]]).optional(),
+  group: z
+    .string()
+    .max(30)
+    .optional()
+    .describe('The group it belongs to, e.g. "Self-care" or "Education" (one per habit). A new name starts a group; "" takes it out of its group.'),
 };
+const inGroup = z.string().optional().describe('Only the habits in this group (list_habits shows the groups).');
 
 server.registerTool(
   'list_habits',
   {
     title: 'Habits and how today is going',
     description:
-      "Every habit with its id, goal and schedule, and how it stands on a day (default today): done, partly done (with the amount), skipped, not done or not due, the note, the streak, and for 'times a week' habits the week so far.",
-    inputSchema: { date, include_archived: z.boolean().optional().describe('Also list archived habits.') },
+      "Every habit (or those in one group) in the order the user usually does them, with its id, goal, schedule and group, and how it stands on a day (default today): done, partly done (with the amount), skipped, not done or not due, the note, the streak, and for 'times a week' habits the week so far.",
+    inputSchema: { date, include_archived: z.boolean().optional().describe('Also list archived habits.'), group: inGroup },
     annotations: { readOnlyHint: true, openWorldHint: false },
   },
   (input) => read(() => listHabits(input)),
@@ -197,11 +203,12 @@ server.registerTool(
   {
     title: 'Progress and streaks over a period',
     description:
-      'For each habit (or one habit) over a period (default: the last 7 days): days done out of the days due (weeks met for "times a week" habits), hit rate, average amount, current and best streak, and day by day for up to a month or for one habit.',
+      'For each habit (or one habit, or one group) over a period (default: the last 7 days): days done out of the days due (weeks met for "times a week" habits), hit rate, average amount, current and best streak, and day by day for up to a month or for one habit; with groups, the hit rate of each group.',
     inputSchema: {
       from: z.string().optional().describe('First day, YYYY-MM-DD. Default: 6 days before "to".'),
       to: z.string().optional().describe('Last day, YYYY-MM-DD. Default: today.'),
       habit: habit.optional(),
+      group: inGroup,
     },
     annotations: { readOnlyHint: true, openWorldHint: false },
   },
@@ -264,7 +271,7 @@ server.registerTool(
   'edit_habit',
   {
     title: 'Change a habit',
-    description: 'Change a habit\'s name, type, goal, unit, schedule, time of day, color or icon, or pause it (paused days keep the streak) and resume it.',
+    description: 'Change a habit\'s name, type, goal, unit, schedule, time of day, color, icon or group, or pause it (paused days keep the streak) and resume it.',
     inputSchema: { habit, ...fields, paused: z.boolean().optional().describe('true to pause from today, false to resume.') },
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   },

@@ -21,13 +21,13 @@ const VERSION = version();
 const ENTRY = 'habit-tracker-mcp.mjs';
 
 export const TOOLS = [
-  { name: 'list_habits', description: 'Your habits and how today (or any day) is going: done, amounts, skips, notes and streaks.' },
-  { name: 'get_progress', description: 'Progress and streaks over a period, per habit and day by day.' },
+  { name: 'list_habits', description: 'Your habits (all, or one group) and how today (or any day) is going: done, amounts, skips, notes and streaks.' },
+  { name: 'get_progress', description: 'Progress and streaks over a period, per habit, per group and day by day.' },
   { name: 'check_in', description: 'Log a habit as done, or an amount for counts and timers, on any day.' },
   { name: 'undo_check_in', description: 'Take back a check-in or a skip.' },
   { name: 'skip_habit', description: 'Skip a day without breaking the streak.' },
   { name: 'create_habit', description: 'Add a habit, described in one sentence like in the app.' },
-  { name: 'edit_habit', description: "Change a habit's name, goal, schedule, color or icon; pause or resume it." },
+  { name: 'edit_habit', description: "Change a habit's name, goal, schedule, color, icon or group; pause or resume it." },
   { name: 'archive_habit', description: 'Take a habit off the board, keeping its history, or put it back.' },
 ];
 
