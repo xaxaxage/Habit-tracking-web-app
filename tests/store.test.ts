@@ -237,4 +237,5 @@ describe('backups', () => {
       expect(parseData({ version: 1, habits: [{ ...raw, color, icon }] }).habits[0], String(color)).toMatchObject({ color: 'teal', icon: 'check' });
     }
   });
+
 });

@@ -7,7 +7,8 @@ import { Calendar, Gear, Grid, Plus } from './Icons';
 
 export type Tab = 'today' | 'week' | 'settings';
 
-export function BottomNav({ current }: { current: Tab | null }) {
+/** `newHabit`: where the + button goes (a new habit already in the group Today is showing). */
+export function BottomNav({ current, newHabit = '/new' }: { current: Tab | null; newHabit?: string }) {
   return (
     <nav aria-label="Main" class="nav">
       <div class="nav-inner">
@@ -24,7 +25,7 @@ export function BottomNav({ current }: { current: Tab | null }) {
             <Gear size={20} />
           </a>
         </div>
-        <a href="#/new" class="fab" aria-label="New habit">
+        <a href={`#${newHabit}`} class="fab" aria-label="New habit">
           <Plus size={26} strokeWidth={2.6} />
         </a>
       </div>

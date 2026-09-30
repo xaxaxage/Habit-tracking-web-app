@@ -401,6 +401,39 @@
   outline-offset: 1px;
 }
 
+/* ── Views: All, times of day, groups ─────────────────────────────────── */
+.view-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  margin: -6px 0;
+}
+.view-chip {
+  min-width: 44px;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+.view-chip .chip-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.view-chip[aria-pressed='true'] {
+  color: var(--on-ink);
+}
+.view-chip[aria-pressed='true']::before {
+  background: var(--ink);
+  border-color: var(--ink);
+  z-index: -1;
+}
+.view-chip {
+  isolation: isolate;
+}
+.chip-count {
+  font-variant-numeric: tabular-nums;
+}
+
 /* ── Hold-a-tile sheet ────────────────────────────────────────────────── */
 .scrim {
   position: fixed;
@@ -635,6 +668,29 @@
   flex-direction: column;
   gap: 8px;
   margin-top: -8px;
+}
+/* Habits by group, each with its score for the week. */
+.week-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.week-group + .week-group {
+  margin-top: 12px;
+}
+.week-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 12px;
+  padding: 0 4px;
+}
+.week-group-score {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
 }
 .week-row {
   display: flex;
@@ -1059,6 +1115,17 @@
 .row-2 > * {
   flex: 1;
   min-width: 0;
+}
+/* A field with its button: the field takes the room. */
+.row-2.fixed-end > :last-child {
+  flex: none;
+}
+.row-2.grow {
+  flex: 1;
+  min-width: 0;
+}
+.field-btn.wide {
+  width: 100%;
 }
 
 /* ── Settings ─────────────────────────────────────────────────────────── */

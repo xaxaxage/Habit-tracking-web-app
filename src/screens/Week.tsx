@@ -1,7 +1,9 @@
 import type { Habit, Log } from '../lib/types';
-import type { DayState } from '../lib/habits';
+import type { DayState, WeekRow, WeekSummary } from '../lib/habits';
 import { boardOrder } from '../lib/order';
 import { firstDay, fmt, isWeekly, WEEKDAY_LETTER, weekSummary } from '../lib/habits';
+import { ALL, groupsOf, inView, parseView, sameGroup, viewLabel, viewParam, viewsFor, type View } from '../lib/views';
+import { ViewChips } from '../components/ViewChips';
 import { cycleDay, useData } from '../lib/store';
 import { addDays, daysBetween, rangeLabelLong, weekday, weekdayIndex, weekStartOf } from '../lib/dates';
 import { href, navigate } from '../lib/router';
@@ -30,20 +32,99 @@ function weekTitle(first: string, current: string): string {
   return n === 0 ? 'This week' : n === 1 ? 'Last week' : `${n} weeks ago`;
 }
 
-export function Week({ start, today }: { start?: string; today: string }) {
+/** One habit's week: its name and count, then a cell per day to tap. */
+function WeekRowView({ r }: { r: WeekRow }) {
+  const h = r.habit;
+  return (
+    <section class={`week-row c-${h.color}`} aria-label={h.name}>
+      <a class="week-row-head" href={`#/habit/${h.id}`}>
+        <span class="week-row-name">
+          <span class="dot" aria-hidden="true" />
+          <span>{h.name}</span>
+        </span>
+        <span class="week-row-count">
+          {r.done} / {r.due}
+          {isWeekly(h) ? ' this week' : ''}
+        </span>
+      </a>
+      <div role="group" aria-label={`${h.name} by day`} class="week-cells">
+        {r.days.map((c) => {
+          const state = c.state === 'open' && isWeekly(h) ? 'rest day' : STATE_WORDS[c.state];
+          const part = c.state === 'partial' ? partLabel(h, c.log) : '';
+          return (
+            <button
+              type="button"
+              class={`cell ${c.state}`}
+              disabled={c.state === 'future'}
+              aria-label={`${h.name}, ${weekday(c.date)}: ${state}${part ? `, ${part}` : ''}`}
+              onClick={() => cycleDay(h, c.date)}
+            >
+              {c.state === 'done' && <Check size={16} strokeWidth={3} />}
+              {c.state === 'skipped' && <Minus size={16} strokeWidth={2.6} />}
+              {part && <span class="cell-part">{part}</span>}
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+/** A group's habits under its name, with how the group did this week and last. */
+function WeekGroup({ name, rows, score, last, id }: { name: string; rows: WeekRow[]; score: WeekSummary; last: WeekSummary; id: string }) {
+  const lastWeek = last.score !== null && last.rows.length > 0 ? ` · last week ${last.score}%` : '';
+  return (
+    <section class="week-group" aria-labelledby={id}>
+      <div class="week-group-head">
+        <h2 id={id} class="section-label">
+          {name}
+        </h2>
+        <span class="week-group-score">
+          {score.score === null ? 'Nothing due yet' : `${score.done} of ${score.due} · ${score.score}%`}
+          {lastWeek}
+        </span>
+      </div>
+      {rows.map((r) => (
+        <WeekRowView r={r} key={r.habit.id} />
+      ))}
+    </section>
+  );
+}
+
+export function Week({ start, today, show }: { start?: string; today: string; show?: string | null }) {
   const data = useData();
   const ws = data.settings.weekStart;
   const current = weekStartOf(today, ws);
   const first = start && start <= today ? weekStartOf(start, ws) : current;
-  const habits = boardOrder(data, today);
+  const all = boardOrder(data, today);
+  const views = viewsFor(all);
+  const view = views.length > 1 ? parseView(show, all) : ALL;
+  const habits = all.filter((h) => inView(h, view));
   const week = weekSummary(data, first, today, habits);
   const last = weekSummary(data, addDays(first, -7), today, habits);
-  const earliest = habits.reduce((min, h) => {
+  const earliest = all.reduce((min, h) => {
     const f = firstDay(h, data.logs[h.id]);
     return f < min ? f : min;
   }, today);
   const canGoBack = first > weekStartOf(earliest, ws);
-  const go = (d: string) => navigate(d === current ? '/week' : href('/week', { start: d }), { replace: true });
+  const go = (d: string, v: View = view) =>
+    navigate(href('/week', { start: d === current ? undefined : d, show: viewParam(v) }), { replace: true });
+
+  // Under the main view, habits are listed by group (those without one last).
+  const groups = view.kind === 'all' ? groupsOf(habits) : [];
+  const sections = groups.length
+    ? [...groups.map((g) => ({ name: g, test: (h: Habit) => sameGroup(h.group, g) })), { name: 'No group', test: (h: Habit) => !h.group }]
+        .map((s) => {
+          const members = habits.filter(s.test);
+          return {
+            name: s.name,
+            rows: week.rows.filter((r) => s.test(r.habit)),
+            score: weekSummary(data, first, today, members),
+            last: weekSummary(data, addDays(first, -7), today, members),
+          };
+        })
+        .filter((s) => s.rows.length > 0)
+    : [];
   const letters = week.days.map((d) => WEEKDAY_LETTER[weekdayIndex(d)]);
   const shownScore = useCountUp(`week-${first}`, week.score ?? 0, 500);
 
@@ -78,7 +159,9 @@ export function Week({ start, today }: { start?: string; today: string }) {
         </section>
       ) : (
         <>
-          <section aria-label="Weekly score" class="score-card">
+          {views.length > 1 && <ViewChips views={views} current={view} onPick={(v) => go(first, v)} />}
+
+          <section aria-label={view.kind === 'all' ? 'Weekly score' : `Weekly score, ${viewLabel(view)}`} class="score-card">
             <span class="pct">{week.score === null ? '–' : `${Math.round(shownScore)}%`}</span>
             <div>
               <strong>
@@ -97,43 +180,16 @@ export function Week({ start, today }: { start?: string; today: string }) {
           </div>
 
           <div class="week-rows">
-            {week.rows.length === 0 && <p class="notice">None of your habits had started yet in this week.</p>}
-            {week.rows.map((r) => {
-              const h = r.habit;
-              return (
-                <section class={`week-row c-${h.color}`} aria-label={h.name} key={h.id}>
-                  <a class="week-row-head" href={`#/habit/${h.id}`}>
-                    <span class="week-row-name">
-                      <span class="dot" aria-hidden="true" />
-                      <span>{h.name}</span>
-                    </span>
-                    <span class="week-row-count">
-                      {r.done} / {r.due}
-                      {isWeekly(h) ? ' this week' : ''}
-                    </span>
-                  </a>
-                  <div role="group" aria-label={`${h.name} by day`} class="week-cells">
-                    {r.days.map((c) => {
-                      const state = c.state === 'open' && isWeekly(h) ? 'rest day' : STATE_WORDS[c.state];
-                      const part = c.state === 'partial' ? partLabel(h, c.log) : '';
-                      return (
-                        <button
-                          type="button"
-                          class={`cell ${c.state}`}
-                          disabled={c.state === 'future'}
-                          aria-label={`${h.name}, ${weekday(c.date)}: ${state}${part ? `, ${part}` : ''}`}
-                          onClick={() => cycleDay(h, c.date)}
-                        >
-                          {c.state === 'done' && <Check size={16} strokeWidth={3} />}
-                          {c.state === 'skipped' && <Minus size={16} strokeWidth={2.6} />}
-                          {part && <span class="cell-part">{part}</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
-              );
-            })}
+            {week.rows.length === 0 && (
+              <p class="notice">
+                {view.kind === 'all'
+                  ? 'None of your habits had started yet in this week.'
+                  : `Nothing ${view.kind === 'group' ? 'in' : 'for'} ${viewLabel(view)} in this week.`}
+              </p>
+            )}
+            {sections.length > 0
+              ? sections.map((s, i) => <WeekGroup key={s.name} id={`week-group-${i}`} name={s.name} rows={s.rows} score={s.score} last={s.last} />)
+              : week.rows.map((r) => <WeekRowView r={r} key={r.habit.id} />)}
           </div>
 
           <div class="legend">

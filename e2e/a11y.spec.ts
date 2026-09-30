@@ -20,6 +20,8 @@ const SCREENS: {
   { name: 'today, empty', hash: '#/', empty: true },
   { name: 'today, compact', hash: '#/', many: true, layout: 'compact' },
   { name: 'today, list', hash: '#/', many: true, layout: 'list' },
+  { name: 'today, one group', hash: '#/?show=g:Self-care', many: true },
+  { name: 'today, one time of day', hash: '#/?show=evening', many: true },
   {
     name: 'hold a tile (count)',
     hash: '#/',
@@ -38,6 +40,8 @@ const SCREENS: {
   },
   { name: 'week', hash: '#/week' },
   { name: 'last week', hash: '#/week?start=2026-09-14' },
+  { name: 'week, by group', hash: '#/week', many: true },
+  { name: 'week, one group', hash: '#/week?show=g:Health', many: true },
   { name: 'habit history', hash: '#/habit/read00000001' },
   { name: 'habit history, weekly', hash: '#/habit/workout00001' },
   { name: 'new habit', hash: '#/new?text=Drink%208%20glasses%20of%20water' },
@@ -58,6 +62,15 @@ const SCREENS: {
     },
   },
   { name: 'edit habit', hash: '#/habit/journal00001/edit' },
+  {
+    name: 'edit habit, group',
+    hash: '#/habit/extra0000002/edit',
+    many: true,
+    open: async (page) => {
+      await page.getByRole('button', { name: /^Group/ }).click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+    },
+  },
   { name: 'settings', hash: '#/settings', many: true },
   {
     name: 'settings, sync key and relays',

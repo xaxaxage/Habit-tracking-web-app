@@ -24,6 +24,7 @@ const SCREENS: Screen[] = [
   { name: 'today, no habits', hash: '#/', data: 'empty' },
   { name: 'today, compact, 34 habits', hash: '#/', data: 'many', layout: 'compact' },
   { name: 'today, list, 34 habits', hash: '#/', data: 'many', layout: 'list' },
+  { name: 'today, one group of 34 habits', hash: '#/?show=g:Household%20chores%20and%20errands', data: 'many' },
   {
     name: 'hold a tile',
     hash: '#/',
@@ -48,6 +49,15 @@ const SCREENS: Screen[] = [
     },
   },
   { name: 'edit habit', hash: '#/habit/water000001/edit' },
+  {
+    name: 'edit habit, group',
+    hash: '#/habit/extra0000003/edit',
+    data: 'many',
+    open: async (page) => {
+      await page.getByRole('button', { name: /^Group/ }).click();
+      await expect(page.getByRole('dialog')).toBeVisible();
+    },
+  },
   { name: 'settings', hash: '#/settings' },
   { name: 'settings, 34 habits', hash: '#/settings', data: 'many' },
   { name: 'settings, syncing with other devices', hash: '#/settings', synced: true },

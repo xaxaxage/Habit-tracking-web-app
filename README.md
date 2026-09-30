@@ -21,11 +21,19 @@ tested sync, service worker, palettes, animations, Claude Desktop extension and 
   when you finished each one over the last eight weeks (recent weeks count more, days filled in afterwards don't).
   New habits go by their time of day. **Hold a tile and drag it** to put it somewhere else (with a keyboard:
   Alt+Up / Alt+Down); it stays there until you've done it in a different order on 7 days.
+- **Groups** – put each habit in a group such as Self-care or Education (**Group** on its edit screen; type a new
+  name to start one). Rename or remove groups in **Settings → Habits**.
+- **Views** – a row of chips above the board picks what it shows: **All** (the main view), a group, or, once you
+  have more than 8 habits, a time of day (Morning, Afternoon, Evening, Anytime). Each chip says how many of its
+  habits are done today. With a group picked, **+** starts a new habit in it. The chips appear once there's
+  something to pick.
 - **Hold a tile** (or right-click, or Shift+Enter with a keyboard) – mark done or skip the day (the streak stays),
   set an exact amount, add a note, go to its week or its history, or **Edit** it. Swipe the sheet down (or tap outside)
   to close it.
 - **Week** – every habit day by day. Tap a day to change it: open → done → skipped → open. A score for the week
-  (skipped days don't count against you) against last week's; step back through earlier weeks.
+  (skipped days don't count against you) against last week's; step back through earlier weeks. With groups, the
+  habits are listed under their group, each with its own score for the week and last week's; the same chips show
+  one group (or time of day) at a time, with its own score.
 - **Habit history** – current and best streak, hit rate and average over the last 18 weeks, an 18-week heatmap,
   your notes, and **Pause** (paused days don't count, so the streak is kept).
 - **New habit in one sentence** – "Read 20 min every evening", "Workout 3 times a week", "Drink 8 glasses of
@@ -201,7 +209,7 @@ Optional: `RELAYS` (space- or comma-separated `wss://` URLs) to use other relays
 ## Your data
 
 Everything lives in the browser storage (`localStorage`) of the app on each device, as one JSON record under
-`habit-tracker:v1`: your habits (name, kind, goal, schedule, color, icon, pauses) and, per habit and day, what
+`habit-tracker:v1`: your habits (name, kind, goal, schedule, color, icon, group, pauses, where you moved it) and, per habit and day, what
 happened (the amount, a skip, a note). Every change is saved the moment you make it. If the device's storage is
 ever full, a red banner says so and the change stays on screen until it can be saved.
 

@@ -8,6 +8,8 @@ import { href, navigate } from '../lib/router';
 import { showToast } from '../lib/toast';
 import { HabitSheet } from '../components/HabitSheet';
 import { Board, type Move } from '../components/Board';
+import { ViewChips } from '../components/ViewChips';
+import { ALL, inView, parseView, viewLabel, viewParam, viewsFor, type View } from '../lib/views';
 import { BRIGHT_COLORS } from '../lib/theme';
 
 export const EXAMPLES = ['Drink 8 glasses of water', 'Workout 3 times a week', 'Meditate 10 min every morning', 'No coffee after 14:00'];
@@ -47,17 +49,28 @@ function notDueMeta(t: Tile, date: string, first: string): string | undefined {
   return `Not today · ${repeatLabel(h.schedule)}`;
 }
 
-export function Today({ date, today }: { date: string; today: string }) {
+/** Done and due among these tiles (skipped days don't count). */
+function tally(tiles: Tile[]) {
+  const counted = tiles.filter((t) => t.status !== 'skipped' && t.status !== 'met');
+  return { done: counted.filter((t) => t.status === 'done').length, total: counted.length };
+}
+
+export function Today({ date, today, show }: { date: string; today: string; show?: string | null }) {
   const data = useData();
   const [open, setOpen] = useState<string | null>(null);
   const [said, say] = useState('');
   const habits = boardOrder(data, today);
   const board = boardFor(data, date, today, habits);
   const layout = data.settings.layout;
+  const views = viewsFor(habits);
+  const view = views.length > 1 ? parseView(show, habits) : ALL;
+  const due = board.due.filter((t) => inView(t.habit, view));
+  const other = board.other.filter((t) => inView(t.habit, view));
   const isToday = date === today;
   const openHabit = open ? data.habits.find((h) => h.id === open) : undefined;
 
-  const pick = (d: string) => navigate(d === today ? '/' : href('/', { date: d }), { replace: true });
+  const go = (d: string, v: View) => navigate(href('/', { date: d === today ? undefined : d, show: viewParam(v) }), { replace: true });
+  const pick = (d: string) => go(d, view);
 
   const tap = (t: Tile) => {
     const h = t.habit;
@@ -129,21 +142,20 @@ export function Today({ date, today }: { date: string; today: string }) {
         </div>
       )}
 
+      {views.length > 1 && <ViewChips views={views} current={view} count={(v) => tally(board.due.filter((t) => inView(t.habit, v)))} onPick={(v) => go(date, v)} />}
+
       {habits.length === 0 ? (
         <Empty />
       ) : (
         <>
-          {board.due.length > 0 ? (
-            <Board
-              tiles={board.due}
-              layout={layout}
-              label={`Due ${isToday ? 'today' : 'this day'}`}
-              onTap={tap}
-              onOptions={setOpen}
-              onMove={move(board.due)}
-            />
-          ) : (
+          {due.length > 0 ? (
+            <Board tiles={due} layout={layout} label={`Due ${isToday ? 'today' : 'this day'}`} onTap={tap} onOptions={setOpen} onMove={move(due)} />
+          ) : view.kind === 'all' ? (
             <p class="notice">Nothing is due {isToday ? 'today' : 'on this day'}. Enjoy the rest day.</p>
+          ) : (
+            <p class="notice">
+              Nothing {view.kind === 'group' ? 'in' : 'for'} {viewLabel(view)} is due {isToday ? 'today' : 'on this day'}.
+            </p>
           )}
           <p id="board-hint" class="board-hint">
             <span class="touch-only">
@@ -157,18 +169,18 @@ export function Today({ date, today }: { date: string; today: string }) {
           <p class="sr-only" aria-live="polite">
             {said}
           </p>
-          {board.other.length > 0 && (
+          {other.length > 0 && (
             <>
               <h2 class="section-label other-label">Not due {isToday ? 'today' : 'this day'}</h2>
               <Board
-                tiles={board.other}
+                tiles={other}
                 layout={layout}
                 label={`Not due ${isToday ? 'today' : 'this day'}`}
                 quiet
                 meta={(t) => notDueMeta(t, date, firstDay(t.habit, data.logs[t.habit.id]))}
                 onTap={tap}
                 onOptions={setOpen}
-                onMove={move(board.other)}
+                onMove={move(other)}
               />
             </>
           )}

@@ -2,16 +2,17 @@ import { useEffect, useMemo, useState } from 'preact/hooks';
 import type { Habit, HabitColor, HabitKind, Schedule, TimeOfDay } from '../lib/types';
 import { HABIT_COLORS, TIMES_OF_DAY } from '../lib/types';
 import { autoColor, defaultStep, parseHabit, type Draft } from '../lib/parse';
-import { fmt, goalLabel, KIND_LABEL, repeatLabel, TIME_LABEL, WEEKDAY_SHORT } from '../lib/habits';
+import { boardHabits, fmt, goalLabel, KIND_LABEL, repeatLabel, TIME_LABEL, WEEKDAY_SHORT } from '../lib/habits';
 import { guessIcon, HABIT_ICONS, ICON_GROUPS } from '../lib/icons';
-import { archiveHabit, createHabit, deleteHabit, MAX_NAME, restoreHabit, updateHabit } from '../lib/store';
+import { archiveHabit, createHabit, deleteHabit, getData, MAX_NAME, restoreHabit, updateHabit } from '../lib/store';
+import { groupsOf, matchGroup, MAX_GROUP, sameGroup } from '../lib/views';
 import { goBack, navigate } from '../lib/router';
 import { showToast } from '../lib/toast';
 import { Sheet } from '../components/Common';
 import { ChevronLeft, Close, HabitGlyph } from '../components/Icons';
 import { EXAMPLES } from './Today';
 
-type FieldKey = 'name' | 'kind' | 'goal' | 'repeat' | 'time' | 'icon';
+type FieldKey = 'name' | 'kind' | 'goal' | 'repeat' | 'time' | 'icon' | 'group';
 
 const COLOR_NAMES: Record<HabitColor, string> = {
   teal: 'Dark teal',
@@ -35,25 +36,28 @@ const FIELD_TITLES: Record<FieldKey, string> = {
   repeat: 'Repeat',
   time: 'Time of day',
   icon: 'Icon',
+  group: 'Group',
 };
 
 interface Form extends Draft {
   color: HabitColor;
+  /** "" for none. */
+  group: string;
 }
 
 function fromHabit(h: Habit): Form {
-  return { name: h.name, kind: h.kind, target: h.target, unit: h.unit, schedule: h.schedule, time: h.time, icon: h.icon, color: h.color };
+  return { name: h.name, kind: h.kind, target: h.target, unit: h.unit, schedule: h.schedule, time: h.time, icon: h.icon, color: h.color, group: h.group ?? '' };
 }
 
 /** New habit from one sentence, or editing one; every detail can be changed with a tap. */
-export function HabitForm({ habit, initialText = '' }: { habit?: Habit; initialText?: string }) {
+export function HabitForm({ habit, initialText = '', initialGroup = '' }: { habit?: Habit; initialText?: string; initialGroup?: string }) {
   const editing = !!habit;
   const [text, setText] = useState(initialText);
   const [edits, setEdits] = useState<Partial<Form>>({});
   const [field, setField] = useState<FieldKey | null>(null);
 
   const parsed = useMemo(() => parseHabit(text), [text]);
-  const base: Form = habit ? fromHabit(habit) : { ...parsed, color: autoColor(parsed.name) };
+  const base: Form = habit ? fromHabit(habit) : { ...parsed, color: autoColor(parsed.name), group: matchGroup(initialGroup, groupsOf(boardHabits(getData()))) };
   const form: Form = { ...base, ...edits };
   if (!habit && !edits.color) form.color = autoColor(form.name);
   // A name typed by hand suggests its own icon, until one is picked.
@@ -171,6 +175,10 @@ export function HabitForm({ habit, initialText = '' }: { habit?: Habit; initialT
             ))}
           </div>
         </div>
+        <button type="button" class="field-btn wide" aria-label={`Group: ${form.group || 'none'}. Change`} onClick={() => setField('group')}>
+          <span class="k">Group</span>
+          <span class={`v${form.group ? '' : ' default'}`}>{form.group || 'None'}</span>
+        </button>
       </section>
 
       {habit && (
@@ -413,11 +421,66 @@ function FieldSheet({
           </div>
         ))}
 
+      {field === 'group' && <GroupField group={form.group} onChange={(group) => onChange({ group })} />}
+
       <div class="sheet-foot">
         <button type="button" class="btn light" onClick={onClose}>
           Done
         </button>
       </div>
     </Sheet>
+  );
+}
+
+/** Pick a group, or start a new one by typing its name. */
+function GroupField({ group, onChange }: { group: string; onChange: (group: string) => void }) {
+  const existing = groupsOf(boardHabits(getData()));
+  const groups = group && !existing.some((g) => sameGroup(g, group)) ? [...existing, group] : existing;
+  const [draft, setDraft] = useState('');
+  const add = () => {
+    const name = matchGroup(draft, groups);
+    if (!name) return;
+    onChange(name);
+    setDraft('');
+  };
+  return (
+    <>
+      <div role="radiogroup" aria-label="Group" class="options">
+        <button type="button" role="radio" aria-checked={!group} class="option" onClick={() => onChange('')}>
+          No group
+        </button>
+        {groups.map((g) => (
+          <button type="button" role="radio" aria-checked={sameGroup(group, g)} class="option" key={g} onClick={() => onChange(g)}>
+            {g}
+          </button>
+        ))}
+      </div>
+      <form
+        class="field"
+        onSubmit={(e) => {
+          e.preventDefault();
+          add();
+        }}
+      >
+        <label for="new-group" class="field-label">
+          New group
+        </label>
+        <div class="row-2 fixed-end">
+          <input
+            id="new-group"
+            class="input"
+            maxLength={MAX_GROUP}
+            autoComplete="off"
+            enterKeyHint="done"
+            placeholder="Self-care, Education…"
+            value={draft}
+            onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
+          />
+          <button type="submit" class="pill-btn" disabled={!draft.trim()}>
+            Add
+          </button>
+        </div>
+      </form>
+    </>
   );
 }

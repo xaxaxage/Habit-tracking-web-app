@@ -60,6 +60,8 @@ export interface Habit {
   order: number;
   /** Where you moved it on the board, if you did. */
   placed?: Placement;
+  /** The group it's in (Self-care, Education…), by name; none when missing. */
+  group?: string;
   /** First day the habit counts (YYYY-MM-DD). */
   start: string;
   pauses: Pause[];

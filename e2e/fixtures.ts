@@ -123,7 +123,19 @@ export function sampleData(): AppData {
 
 export const STORAGE_KEY = 'habit-tracker:v1';
 
-/** 34 habits, some with very long names, in every color (done, partly done and open), for crowded-board tests. */
+/** The sample habits in three groups: Health (Water, Stretch, Workout), Education (Read) and Self-care (Journal, Screens off). */
+export function groupedData(): AppData {
+  const data = sampleData();
+  const groups: Record<string, string> = { Water: 'Health', Stretch: 'Health', Workout: 'Health', Read: 'Education', Journal: 'Self-care' };
+  for (const h of data.habits) h.group = groups[h.name] ?? 'Self-care';
+  return data;
+}
+
+/**
+ * 34 habits, some with very long names, in every color (done, partly done and
+ * open), at every time of day and in four groups (one with a long name), for
+ * crowded-board tests.
+ */
 export function manyHabits(): AppData {
   const data = sampleData();
   const long = [
@@ -140,6 +152,8 @@ export function manyHabits(): AppData {
       id,
       name: `${long[i % long.length]}${i >= long.length ? ` ${i}` : ''}`.slice(0, 60),
       color: HABIT_COLORS[Math.floor(i / 2) % HABIT_COLORS.length],
+      time: (['morning', 'afternoon', 'evening', 'anytime'] as const)[i % 4],
+      group: ['Health', 'Education', 'Self-care', 'Household chores and errands'][i % 4],
       order: 10 + i,
       schedule: i % 7 === 3 ? { type: 'days', days: [5, 6] } : data.habits[i % 6].schedule,
     });

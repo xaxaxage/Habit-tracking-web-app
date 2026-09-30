@@ -3,6 +3,7 @@ import type { AppData, Habit, HabitColor, HabitKind, Log, Pause, Placement, Sche
 import { BOARD_LAYOUTS, HABIT_COLORS, HABIT_KINDS, TIMES_OF_DAY } from './types';
 import { addDays, isDateKey, todayKey } from './dates';
 import { isIconId } from './icons';
+import { cleanGroup } from './views';
 import { isDone, isEmptyLog } from './habits';
 import { defaultStep } from './parse';
 
@@ -106,6 +107,8 @@ export function cleanHabit(raw: any): Habit | undefined {
   if (time(raw.archivedAt)) habit.archivedAt = time(raw.archivedAt);
   const placed = cleanPlacement(raw.placed);
   if (placed) habit.placed = placed;
+  const group = cleanGroup(raw.group);
+  if (group) habit.group = group;
   return habit;
 }
 
@@ -281,6 +284,8 @@ export interface HabitInput {
   color: HabitColor;
   icon: string;
   step?: number;
+  /** "" for none. */
+  group?: string;
 }
 
 export function createHabit(input: HabitInput, today = todayKey()): Habit {
@@ -335,6 +340,17 @@ export function resumeHabit(id: string, today = todayKey()) {
 export function placeHabit(id: string, after: string | undefined, before: string | undefined) {
   if (!after && !before) return;
   replaceHabit(id, (h) => ({ ...h, placed: { ...(after ? { after } : {}), ...(before ? { before } : {}), at: Date.now() } }));
+}
+
+/** Rename a group on every habit in it (archived ones too); an empty name takes them out of the group. */
+export function renameGroup(from: string, to: string) {
+  const name = cleanGroup(to);
+  const habits = data.habits.map((h) => {
+    if (h.group !== from || h.group === name) return h;
+    const { group: _old, ...rest } = h;
+    return cleanHabit({ ...rest, ...(name ? { group: name } : {}), updatedAt: stamp(h.updatedAt) })!;
+  });
+  commit({ ...data, habits });
 }
 
 /** Delete a habit and its check-ins (on every synced device, too). */

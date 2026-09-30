@@ -260,7 +260,6 @@ export interface Tile {
   week?: WeekProgress;
 }
 
-/** Habits that aren't archived, in board order. */
 /** The habits on the board (not archived), oldest first. The board shows them in boardOrder() (order.ts). */
 export function boardHabits(data: AppData): Habit[] {
   return data.habits.filter((h) => !h.archivedAt).sort((a, b) => a.order - b.order || (a.id < b.id ? -1 : 1));

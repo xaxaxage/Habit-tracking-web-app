@@ -2,7 +2,9 @@ import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
 import { getSaveError, useData } from './lib/store';
 import { toastNavigated } from './lib/toast';
 import { isDateKey, todayKey } from './lib/dates';
-import { goBack, takeScrollToTop, useRoute } from './lib/router';
+import { goBack, href, takeScrollToTop, useRoute } from './lib/router';
+import { boardHabits } from './lib/habits';
+import { parseView } from './lib/views';
 import { BottomNav, ToastHost, type Tab } from './components/Common';
 import { ChevronLeft } from './components/Icons';
 import { Today } from './screens/Today';
@@ -51,18 +53,22 @@ export function App() {
   const today = todayKey();
   const { segments, query } = route;
 
+  // Showing a group on Today or Week, + starts a habit in that group.
+  const view = ['', 'week'].includes(segments[0] ?? '') ? parseView(query.get('show'), boardHabits(data)) : undefined;
+  const newHabit = view?.kind === 'group' ? href('/new', { group: view.group }) : '/new';
+
   let screen;
   let tab: Tab | null = null;
   switch (segments[0] ?? '') {
     case '': {
       const raw = query.get('date');
-      screen = <Today date={isDateKey(raw) && raw <= today ? raw : today} today={today} />;
+      screen = <Today date={isDateKey(raw) && raw <= today ? raw : today} today={today} show={query.get('show')} />;
       tab = 'today';
       break;
     }
     case 'week': {
       const start = query.get('start');
-      screen = <Week start={isDateKey(start) ? start : undefined} today={today} />;
+      screen = <Week start={isDateKey(start) ? start : undefined} today={today} show={query.get('show')} />;
       tab = 'week';
       break;
     }
@@ -74,7 +80,7 @@ export function App() {
       break;
     }
     case 'new':
-      screen = <HabitForm key={`new-${query.get('text') ?? ''}`} initialText={query.get('text') ?? ''} />;
+      screen = <HabitForm key={`new-${query.get('text') ?? ''}-${query.get('group') ?? ''}`} initialText={query.get('text') ?? ''} initialGroup={query.get('group') ?? ''} />;
       break;
     case 'settings':
       screen = <Settings />;
@@ -89,7 +95,7 @@ export function App() {
       <div key={route.path} class="screen-host">
         {screen}
       </div>
-      {tab && <BottomNav current={tab} />}
+      {tab && <BottomNav current={tab} newHabit={newHabit} />}
       {saveError && (
         <div class="save-error" role="alert">
           {saveError}

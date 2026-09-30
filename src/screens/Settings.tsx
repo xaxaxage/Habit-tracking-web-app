@@ -1,9 +1,11 @@
 import type { ComponentChildren } from 'preact';
+import { useState } from 'preact/hooks';
 import {
   backupJson,
   clearAll,
   deleteHabit,
   parseData,
+  renameGroup,
   restoreBackup,
   restoreHabit,
   updateSettings,
@@ -15,6 +17,7 @@ import { showToast } from '../lib/toast';
 import { loadSyncConfig } from '../lib/sync/state';
 import { SyncSettings } from './SyncSettings';
 import { AppearanceSettings } from './AppearanceSettings';
+import { groupsOf, matchGroup, MAX_GROUP, sameGroup } from '../lib/views';
 
 export function Card({ title, id, children }: { title: string; id: string; children: ComponentChildren }) {
   return (
@@ -47,6 +50,93 @@ async function importBackup(file: File) {
   }
 }
 
+/** The groups habits are in: rename one, or take its habits out of it. */
+function Groups() {
+  const data = useData();
+  const groups = groupsOf(data.habits);
+  const [editing, setEditing] = useState<string | null>(null);
+  const [draft, setDraft] = useState('');
+  const count = (g: string) => data.habits.filter((h) => sameGroup(h.group, g)).length;
+  const save = (from: string) => {
+    const to = matchGroup(draft, groups.filter((g) => g !== from));
+    if (to && to !== from) {
+      for (const spelling of new Set(data.habits.filter((h) => sameGroup(h.group, from)).map((h) => h.group!))) renameGroup(spelling, to);
+      showToast(`Renamed to ${to}`);
+    }
+    setEditing(null);
+  };
+  return (
+    <div class="field">
+      <span class="field-label">Groups ({groups.length})</span>
+      {groups.length === 0 ? (
+        <p class="hint">Put habits in groups like Self-care or Education from a habit's edit screen (Group). Today and Week can then show one group at a time.</p>
+      ) : (
+        <ul class="list plain-list" aria-label="Groups">
+          {groups.map((g) =>
+            editing === g ? (
+              <li class="settings-row" key={g}>
+                <form
+                  class="row-2 fixed-end grow"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    save(g);
+                  }}
+                >
+                  <input
+                    class="input"
+                    aria-label={`New name for ${g}`}
+                    maxLength={MAX_GROUP}
+                    autoComplete="off"
+                    enterKeyHint="done"
+                    value={draft}
+                    onInput={(e) => setDraft((e.target as HTMLInputElement).value)}
+                    ref={(el) => el?.focus()}
+                  />
+                  <button type="submit" class="pill-btn" disabled={!draft.trim()}>
+                    Save
+                  </button>
+                </form>
+              </li>
+            ) : (
+              <li class="settings-row" key={g}>
+                <span class="row-main">
+                  <span class="row-title">{g}</span>
+                  <span class="row-sub">
+                    {count(g)} {count(g) === 1 ? 'habit' : 'habits'}
+                  </span>
+                </span>
+                <button
+                  type="button"
+                  class="pill-btn"
+                  aria-label={`Rename ${g}`}
+                  onClick={() => {
+                    setDraft(g);
+                    setEditing(g);
+                  }}
+                >
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  class="pill-btn danger-text"
+                  aria-label={`Remove the group ${g}`}
+                  onClick={() => {
+                    if (!confirm(`Remove the group "${g}"? Its habits stay, without a group.`)) return;
+                    for (const spelling of new Set(data.habits.filter((h) => sameGroup(h.group, g)).map((h) => h.group!))) renameGroup(spelling, '');
+                    showToast(`Removed ${g}`);
+                  }}
+                >
+                  Remove
+                </button>
+              </li>
+            ),
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 function HabitSettings() {
   const data = useData();
   const archived = data.habits.filter((h) => h.archivedAt).sort((a, b) => b.archivedAt! - a.archivedAt!);
@@ -66,6 +156,7 @@ function HabitSettings() {
         </div>
       </div>
 
+      <Groups />
 
       <div class="field">
         <span class="field-label">Archived ({archived.length})</span>
