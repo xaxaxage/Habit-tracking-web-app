@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useState } from 'preact/hooks';
+import { Analytics } from '@vercel/analytics/react';
 import { getSaveError, useData } from './lib/store';
 import { toastNavigated } from './lib/toast';
 import { isDateKey, todayKey } from './lib/dates';
@@ -102,6 +103,7 @@ export function App() {
         </div>
       )}
       <ToastHost low={!tab} />
+      <Analytics />
     </>
   );
 }
