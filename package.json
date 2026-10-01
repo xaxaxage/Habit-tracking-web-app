@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@scure/bip39": "^2.4.0",
+    "@vercel/analytics": "^2.0.1",
     "nostr-tools": "^2.25.2",
     "preact": "^10.29.8"
   },
